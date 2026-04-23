@@ -9,38 +9,316 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SuperRouteImport } from './routes/super'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as AppRouteImport } from './routes/app'
+import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SuperIndexRouteImport } from './routes/super.index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AdminIndexRouteImport } from './routes/admin.index'
+import { Route as SuperUsersRouteImport } from './routes/super.users'
+import { Route as SuperSettingsRouteImport } from './routes/super.settings'
+import { Route as SuperNotificationsRouteImport } from './routes/super.notifications'
+import { Route as SuperAdminsRouteImport } from './routes/super.admins'
+import { Route as AppSettingsRouteImport } from './routes/app.settings'
+import { Route as AppPayRouteImport } from './routes/app.pay'
+import { Route as AppNotificationsRouteImport } from './routes/app.notifications'
+import { Route as AppHistoryRouteImport } from './routes/app.history'
+import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
+import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
+import { Route as AdminApprovalsRouteImport } from './routes/admin.approvals'
 
+const SuperRoute = SuperRouteImport.update({
+  id: '/super',
+  path: '/super',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AppRoute = AppRouteImport.update({
+  id: '/app',
+  path: '/app',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SuperIndexRoute = SuperIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SuperRoute,
+} as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AdminRoute,
+} as any)
+const SuperUsersRoute = SuperUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperSettingsRoute = SuperSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperNotificationsRoute = SuperNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => SuperRoute,
+} as any)
+const SuperAdminsRoute = SuperAdminsRouteImport.update({
+  id: '/admins',
+  path: '/admins',
+  getParentRoute: () => SuperRoute,
+} as any)
+const AppSettingsRoute = AppSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPayRoute = AppPayRouteImport.update({
+  id: '/pay',
+  path: '/pay',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppNotificationsRoute = AppNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppHistoryRoute = AppHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => AppRoute,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminNotificationsRoute = AdminNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminApprovalsRoute = AdminApprovalsRouteImport.update({
+  id: '/approvals',
+  path: '/approvals',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/super': typeof SuperRouteWithChildren
+  '/admin/approvals': typeof AdminApprovalsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/pay': typeof AppPayRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/notifications': typeof SuperNotificationsRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/users': typeof SuperUsersRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/approvals': typeof AdminApprovalsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/pay': typeof AppPayRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/notifications': typeof SuperNotificationsRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/users': typeof SuperUsersRoute
+  '/admin': typeof AdminIndexRoute
+  '/app': typeof AppIndexRoute
+  '/super': typeof SuperIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
+  '/app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/super': typeof SuperRouteWithChildren
+  '/admin/approvals': typeof AdminApprovalsRoute
+  '/admin/notifications': typeof AdminNotificationsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/app/history': typeof AppHistoryRoute
+  '/app/notifications': typeof AppNotificationsRoute
+  '/app/pay': typeof AppPayRoute
+  '/app/settings': typeof AppSettingsRoute
+  '/super/admins': typeof SuperAdminsRoute
+  '/super/notifications': typeof SuperNotificationsRoute
+  '/super/settings': typeof SuperSettingsRoute
+  '/super/users': typeof SuperUsersRoute
+  '/admin/': typeof AdminIndexRoute
+  '/app/': typeof AppIndexRoute
+  '/super/': typeof SuperIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/super'
+    | '/admin/approvals'
+    | '/admin/notifications'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/app/history'
+    | '/app/notifications'
+    | '/app/pay'
+    | '/app/settings'
+    | '/super/admins'
+    | '/super/notifications'
+    | '/super/settings'
+    | '/super/users'
+    | '/admin/'
+    | '/app/'
+    | '/super/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/admin/approvals'
+    | '/admin/notifications'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/app/history'
+    | '/app/notifications'
+    | '/app/pay'
+    | '/app/settings'
+    | '/super/admins'
+    | '/super/notifications'
+    | '/super/settings'
+    | '/super/users'
+    | '/admin'
+    | '/app'
+    | '/super'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/app'
+    | '/login'
+    | '/register'
+    | '/super'
+    | '/admin/approvals'
+    | '/admin/notifications'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/app/history'
+    | '/app/notifications'
+    | '/app/pay'
+    | '/app/settings'
+    | '/super/admins'
+    | '/super/notifications'
+    | '/super/settings'
+    | '/super/users'
+    | '/admin/'
+    | '/app/'
+    | '/super/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
+  AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  SuperRoute: typeof SuperRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/super': {
+      id: '/super'
+      path: '/super'
+      fullPath: '/super'
+      preLoaderRoute: typeof SuperRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/app': {
+      id: '/app'
+      path: '/app'
+      fullPath: '/app'
+      preLoaderRoute: typeof AppRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +326,175 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/super/': {
+      id: '/super/'
+      path: '/'
+      fullPath: '/super/'
+      preLoaderRoute: typeof SuperIndexRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/super/users': {
+      id: '/super/users'
+      path: '/users'
+      fullPath: '/super/users'
+      preLoaderRoute: typeof SuperUsersRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/settings': {
+      id: '/super/settings'
+      path: '/settings'
+      fullPath: '/super/settings'
+      preLoaderRoute: typeof SuperSettingsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/notifications': {
+      id: '/super/notifications'
+      path: '/notifications'
+      fullPath: '/super/notifications'
+      preLoaderRoute: typeof SuperNotificationsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/admins': {
+      id: '/super/admins'
+      path: '/admins'
+      fullPath: '/super/admins'
+      preLoaderRoute: typeof SuperAdminsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/app/settings': {
+      id: '/app/settings'
+      path: '/settings'
+      fullPath: '/app/settings'
+      preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/pay': {
+      id: '/app/pay'
+      path: '/pay'
+      fullPath: '/app/pay'
+      preLoaderRoute: typeof AppPayRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/notifications': {
+      id: '/app/notifications'
+      path: '/notifications'
+      fullPath: '/app/notifications'
+      preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/history': {
+      id: '/app/history'
+      path: '/history'
+      fullPath: '/app/history'
+      preLoaderRoute: typeof AppHistoryRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/notifications': {
+      id: '/admin/notifications'
+      path: '/notifications'
+      fullPath: '/admin/notifications'
+      preLoaderRoute: typeof AdminNotificationsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/approvals': {
+      id: '/admin/approvals'
+      path: '/approvals'
+      fullPath: '/admin/approvals'
+      preLoaderRoute: typeof AdminApprovalsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
+interface AdminRouteChildren {
+  AdminApprovalsRoute: typeof AdminApprovalsRoute
+  AdminNotificationsRoute: typeof AdminNotificationsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminApprovalsRoute: AdminApprovalsRoute,
+  AdminNotificationsRoute: AdminNotificationsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminIndexRoute: AdminIndexRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
+
+interface AppRouteChildren {
+  AppHistoryRoute: typeof AppHistoryRoute
+  AppNotificationsRoute: typeof AppNotificationsRoute
+  AppPayRoute: typeof AppPayRoute
+  AppSettingsRoute: typeof AppSettingsRoute
+  AppIndexRoute: typeof AppIndexRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppHistoryRoute: AppHistoryRoute,
+  AppNotificationsRoute: AppNotificationsRoute,
+  AppPayRoute: AppPayRoute,
+  AppSettingsRoute: AppSettingsRoute,
+  AppIndexRoute: AppIndexRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
+interface SuperRouteChildren {
+  SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperNotificationsRoute: typeof SuperNotificationsRoute
+  SuperSettingsRoute: typeof SuperSettingsRoute
+  SuperUsersRoute: typeof SuperUsersRoute
+  SuperIndexRoute: typeof SuperIndexRoute
+}
+
+const SuperRouteChildren: SuperRouteChildren = {
+  SuperAdminsRoute: SuperAdminsRoute,
+  SuperNotificationsRoute: SuperNotificationsRoute,
+  SuperSettingsRoute: SuperSettingsRoute,
+  SuperUsersRoute: SuperUsersRoute,
+  SuperIndexRoute: SuperIndexRoute,
+}
+
+const SuperRouteWithChildren = SuperRoute._addFileChildren(SuperRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
+  AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  SuperRoute: SuperRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
