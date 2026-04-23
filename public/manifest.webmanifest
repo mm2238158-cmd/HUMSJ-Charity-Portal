@@ -1,0 +1,24 @@
+{
+  "name": "HUMSJ Charity Portal",
+  "short_name": "HUMSJ",
+  "description": "Haramaya University Muslim Students Jeme'a Charity Portal",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1a9e9e",
+  "icons": [
+    {
+      "src": "/humsj-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/humsj-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
