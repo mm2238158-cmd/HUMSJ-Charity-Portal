@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { BottomNav, DesktopSidebar } from "@/components/app-nav";
 import { AppHeader } from "@/components/app-header";
+import { EmailVerificationGate } from "@/components/email-verification-gate";
 
 export const Route = createFileRoute("/super")({
   component: SuperLayout,
@@ -29,15 +30,17 @@ function SuperLayout() {
   if (loading || !user || !profile || profile.role !== "super-admin") return <FullScreenLoader />;
 
   return (
-    <div className="min-h-screen flex bg-background">
-      <DesktopSidebar />
-      <div className="flex-1 flex flex-col min-w-0">
-        <AppHeader notificationsHref="/super/notifications" />
-        <main className="flex-1 px-4 py-5 md:px-8 md:py-8 max-w-7xl w-full mx-auto">
-          <Outlet />
-        </main>
-        <BottomNav />
+    <EmailVerificationGate>
+      <div className="min-h-screen flex bg-background">
+        <DesktopSidebar />
+        <div className="flex-1 flex flex-col min-w-0">
+          <AppHeader notificationsHref="/super/notifications" />
+          <main className="flex-1 px-4 py-5 md:px-8 md:py-8 max-w-7xl w-full mx-auto">
+            <Outlet />
+          </main>
+          <BottomNav />
+        </div>
       </div>
-    </div>
+    </EmailVerificationGate>
   );
 }
