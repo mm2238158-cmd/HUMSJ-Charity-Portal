@@ -26,7 +26,7 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const { t } = useTranslation();
-  const { signUp } = useAuth();
+  const { signUp, signInGoogle } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -43,7 +43,19 @@ function RegisterPage() {
     setBusy(true);
     try {
       await signUp({ fullName, phone, gender, email, password });
-      toast.success(t("common.success"));
+      toast.success(t("auth.accountCreated"));
+      navigate({ to: "/" });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onGoogle = async () => {
+    setBusy(true);
+    try {
+      await signInGoogle();
       navigate({ to: "/" });
     } catch (err) {
       toast.error((err as Error).message);
