@@ -45,6 +45,9 @@ const en = {
     verifySent: "Verification email sent",
     verifyFailed: "Email is not verified yet",
     accountCreated: "Account created — check your email to verify",
+    confirmPassword: "Confirm password",
+    passwordMismatch: "Passwords don't match",
+    verifySendFailed: "Account created, but the verification email couldn't be sent. Sign in and tap Resend once your admin authorizes this domain.",
   },
   status: {
     paid: "Paid",

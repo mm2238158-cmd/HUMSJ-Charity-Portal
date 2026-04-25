@@ -47,6 +47,9 @@ const am: Translations = {
     verifySent: "የማረጋገጫ ኢሜይል ተልኳል",
     verifyFailed: "ኢሜይሉ ገና አልተረጋገጠም",
     accountCreated: "መለያ ተፈጥሯል — ለማረጋገጥ ኢሜይልዎን ይመልከቱ",
+    confirmPassword: "የይለፍ ቃል ያረጋግጡ",
+    passwordMismatch: "የይለፍ ቃላት አይዛመዱም",
+    verifySendFailed: "መለያ ተፈጥሯል፣ ግን የማረጋገጫ ኢሜይል ሊላክ አልቻለም። ይግቡና ጎራው ሲፈቀድ 'እንደገና ላክ' ይጫኑ።",
   },
   status: {
     paid: "ተከፍሏል",

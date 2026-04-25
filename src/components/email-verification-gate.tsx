@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { sendEmailVerification } from "firebase/auth";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, friendlyAuthError } from "@/lib/auth-context";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,10 +11,9 @@ import logo from "@/assets/humsj-logo.png";
 
 export function EmailVerificationGate({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
-  const { user, signOut } = useAuth();
+  const { user, signOut, refreshUser } = useAuth();
   const [cooldown, setCooldown] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [, force] = useState(0);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -27,14 +26,17 @@ export function EmailVerificationGate({ children }: { children: ReactNode }) {
   if (!isPassword || user.emailVerified) return <>{children}</>;
 
   const onResend = async () => {
-    if (cooldown > 0) return;
+    if (cooldown > 0 || !auth.currentUser) return;
     setBusy(true);
     try {
-      await sendEmailVerification(user, { url: window.location.origin + "/login" });
+      await sendEmailVerification(auth.currentUser, {
+        url: window.location.origin + "/login",
+        handleCodeInApp: false,
+      });
       toast.success(t("auth.verifySent"));
       setCooldown(60);
     } catch (err) {
-      toast.error((err as Error).message);
+      toast.error(friendlyAuthError(err).message);
     } finally {
       setBusy(false);
     }
@@ -43,10 +45,9 @@ export function EmailVerificationGate({ children }: { children: ReactNode }) {
   const onRefresh = async () => {
     setBusy(true);
     try {
-      await auth.currentUser?.reload();
+      await refreshUser();
       if (auth.currentUser?.emailVerified) {
         toast.success(t("common.success"));
-        force((n) => n + 1);
       } else {
         toast.error(t("auth.verifyFailed"));
       }

@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -35,20 +36,27 @@ interface SignUpData {
   password: string;
 }
 
+export interface SignUpResult {
+  verificationSent: boolean;
+  verificationError?: string;
+}
+
 interface AuthCtx {
   user: FirebaseUser | null;
   profile: UserDoc | null;
   role: Role | null;
   loading: boolean;
+  profileError: string | null;
   signIn: (email: string, password: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
-  signUp: (d: SignUpData) => Promise<void>;
+  signUp: (d: SignUpData) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
 
-function friendlyAuthError(err: unknown): Error {
+export function friendlyAuthError(err: unknown): Error {
   const e = err as { code?: string; message?: string };
   const code = e?.code ?? "";
   const map: Record<string, string> = {
@@ -60,7 +68,14 @@ function friendlyAuthError(err: unknown): Error {
     "auth/invalid-credential": "Incorrect email or password.",
     "auth/network-request-failed": "Network error. Check your connection and try again.",
     "auth/popup-closed-by-user": "Sign-in cancelled.",
+    "auth/popup-blocked": "Browser blocked the sign-in popup. Allow popups and try again.",
     "auth/too-many-requests": "Too many attempts. Please try again later.",
+    "auth/unauthorized-domain":
+      "This domain isn't authorized in Firebase. Add it under Authentication → Settings → Authorized domains.",
+    "auth/unauthorized-continue-uri":
+      "Verification link domain isn't authorized in Firebase. Add this domain under Authentication → Settings → Authorized domains.",
+    "auth/operation-not-allowed":
+      "Google sign-in is disabled in your Firebase project. Enable it in Authentication → Sign-in method.",
   };
   return new Error(map[code] ?? e?.message ?? "Something went wrong");
 }
@@ -69,12 +84,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserDoc | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (!u) {
         setProfile(null);
+        setProfileError(null);
         setLoading(false);
       }
     });
@@ -88,11 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ref,
       async (snap) => {
         if (!snap.exists()) {
-          // bootstrap minimal profile if missing (e.g. Google sign-in first time)
           const newDoc: Omit<UserDoc, "createdAt"> & { createdAt: unknown } = {
             id: user.uid,
             fullName: user.displayName ?? user.email?.split("@")[0] ?? "User",
-            email: user.email ?? "",
+            email: (user.email ?? "").toLowerCase(),
             phone: "",
             gender: "male",
             role: "student",
@@ -106,18 +122,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
           try {
             await setDoc(ref, newDoc);
-          } catch {
-            // surface via loading=false; UI will handle
+            setProfileError(null);
+          } catch (err) {
+            const e = err as { code?: string; message?: string };
+            setProfileError(
+              e?.code === "permission-denied"
+                ? "Profile could not be loaded: database permissions are not configured."
+                : (e?.message ?? "Failed to load profile"),
+            );
           }
         } else {
           setProfile({ id: snap.id, ...(snap.data() as Omit<UserDoc, "id">) });
+          setProfileError(null);
         }
         setLoading(false);
       },
-      () => setLoading(false),
+      (err) => {
+        setProfileError(err.message ?? "Failed to load profile");
+        setLoading(false);
+      },
     );
     return unsub;
   }, [user]);
+
+  const refreshUser = useCallback(async () => {
+    if (!auth.currentUser) return;
+    await auth.currentUser.reload();
+    // Force a new reference so React picks up the changed emailVerified flag
+    setUser({ ...auth.currentUser } as FirebaseUser);
+  }, []);
 
   const value = useMemo<AuthCtx>(
     () => ({
@@ -125,9 +158,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       profile,
       role: profile?.role ?? null,
       loading,
+      profileError,
+      refreshUser,
       signIn: async (email, password) => {
         try {
-          await signInWithEmailAndPassword(auth, email.trim(), password);
+          await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
         } catch (err) {
           throw friendlyAuthError(err);
         }
@@ -140,10 +175,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           throw friendlyAuthError(err);
         }
       },
-      signUp: async (d) => {
+      signUp: async (d): Promise<SignUpResult> => {
+        const cleanEmail = d.email.trim().toLowerCase();
         let cred;
         try {
-          cred = await createUserWithEmailAndPassword(auth, d.email.trim(), d.password);
+          cred = await createUserWithEmailAndPassword(auth, cleanEmail, d.password);
         } catch (err) {
           throw friendlyAuthError(err);
         }
@@ -154,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             await setDoc(ref, {
               id: cred.user.uid,
               fullName: d.fullName.trim(),
-              email: d.email.trim(),
+              email: cleanEmail,
               phone: d.phone.trim(),
               gender: d.gender,
               role: "student" as Role,
@@ -168,7 +204,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
         } catch (err) {
-          // Roll back the auth user so no orphan account is left behind
           try {
             await deleteUser(cred.user);
           } catch {
@@ -182,20 +217,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
           throw new Error(e?.message ?? "Failed to create account");
         }
-        // Send verification email (non-blocking — failure shouldn't break signup)
+        // Send verification email and report whether it actually worked
         try {
           await sendEmailVerification(cred.user, {
             url: window.location.origin + "/login",
+            handleCodeInApp: false,
           });
-        } catch {
-          // ignore
+          return { verificationSent: true };
+        } catch (err) {
+          return {
+            verificationSent: false,
+            verificationError: friendlyAuthError(err).message,
+          };
         }
       },
       signOut: async () => {
         await fbSignOut(auth);
       },
     }),
-    [user, profile, loading],
+    [user, profile, loading, profileError, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
