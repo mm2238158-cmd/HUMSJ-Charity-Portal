@@ -47,6 +47,9 @@ const om: Translations = {
     verifySent: "Imeelii mirkaneessaa ergameera",
     verifyFailed: "Imeeliin amma iyyuu hin mirkanaa'in",
     accountCreated: "Akkaawuntiin uumameera — mirkaneessuuf imeelii kee ilaali",
+    confirmPassword: "Jecha iccitii mirkaneessi",
+    passwordMismatch: "Jechi iccitii wal hin simu",
+    verifySendFailed: "Akkaawuntiin uumameera, garuu imeelii mirkaneessaa erguu hin dandeenye. Seenii erga domeenii kun mirkanaa'ee booda 'Deebisii ergi' tuqi.",
   },
   status: {
     paid: "Kaffalame",

@@ -33,6 +33,7 @@ function RegisterPage() {
   const [gender, setGender] = useState<Gender>("male");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
@@ -40,10 +41,18 @@ function RegisterPage() {
     if (!fullName.trim()) return toast.error(t("auth.nameRequired"));
     if (!phone.trim()) return toast.error(t("auth.phoneRequired"));
     if (password.length < 6) return toast.error(t("auth.passwordShort"));
+    if (password !== confirmPassword) return toast.error(t("auth.passwordMismatch"));
     setBusy(true);
     try {
-      await signUp({ fullName, phone, gender, email, password });
-      toast.success(t("auth.accountCreated"));
+      const result = await signUp({ fullName, phone, gender, email, password });
+      if (result.verificationSent) {
+        toast.success(t("auth.accountCreated"));
+      } else {
+        toast.warning(
+          `${t("auth.verifySendFailed")}: ${result.verificationError ?? ""}`,
+          { duration: 8000 },
+        );
+      }
       navigate({ to: "/" });
     } catch (err) {
       toast.error((err as Error).message);
@@ -102,6 +111,10 @@ function RegisterPage() {
               <div className="space-y-2">
                 <Label htmlFor="password">{t("auth.password")}</Label>
                 <PasswordInput id="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">{t("auth.confirmPassword")}</Label>
+                <PasswordInput id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
               </div>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
