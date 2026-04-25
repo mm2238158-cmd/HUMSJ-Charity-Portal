@@ -13,6 +13,8 @@ import {
   signOut as fbSignOut,
   GoogleAuthProvider,
   signInWithPopup,
+  sendEmailVerification,
+  deleteUser,
   type User as FirebaseUser,
 } from "firebase/auth";
 import {
@@ -45,6 +47,23 @@ interface AuthCtx {
 }
 
 const AuthContext = createContext<AuthCtx | null>(null);
+
+function friendlyAuthError(err: unknown): Error {
+  const e = err as { code?: string; message?: string };
+  const code = e?.code ?? "";
+  const map: Record<string, string> = {
+    "auth/email-already-in-use": "An account with this email already exists.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/weak-password": "Password must be at least 6 characters.",
+    "auth/wrong-password": "Incorrect email or password.",
+    "auth/user-not-found": "Incorrect email or password.",
+    "auth/invalid-credential": "Incorrect email or password.",
+    "auth/network-request-failed": "Network error. Check your connection and try again.",
+    "auth/popup-closed-by-user": "Sign-in cancelled.",
+    "auth/too-many-requests": "Too many attempts. Please try again later.",
+  };
+  return new Error(map[code] ?? e?.message ?? "Something went wrong");
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -85,7 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             notificationsEnabled: true,
             createdAt: serverTimestamp(),
           };
-          await setDoc(ref, newDoc);
+          try {
+            await setDoc(ref, newDoc);
+          } catch {
+            // surface via loading=false; UI will handle
+          }
         } else {
           setProfile({ id: snap.id, ...(snap.data() as Omit<UserDoc, "id">) });
         }
@@ -103,32 +126,69 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: profile?.role ?? null,
       loading,
       signIn: async (email, password) => {
-        await signInWithEmailAndPassword(auth, email, password);
+        try {
+          await signInWithEmailAndPassword(auth, email.trim(), password);
+        } catch (err) {
+          throw friendlyAuthError(err);
+        }
       },
       signInGoogle: async () => {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
+        try {
+          const provider = new GoogleAuthProvider();
+          await signInWithPopup(auth, provider);
+        } catch (err) {
+          throw friendlyAuthError(err);
+        }
       },
       signUp: async (d) => {
-        const cred = await createUserWithEmailAndPassword(auth, d.email, d.password);
+        let cred;
+        try {
+          cred = await createUserWithEmailAndPassword(auth, d.email.trim(), d.password);
+        } catch (err) {
+          throw friendlyAuthError(err);
+        }
         const ref = doc(db, "users", cred.user.uid);
-        const exists = await getDoc(ref);
-        if (!exists.exists()) {
-          await setDoc(ref, {
-            id: cred.user.uid,
-            fullName: d.fullName,
-            email: d.email,
-            phone: d.phone,
-            gender: d.gender,
-            role: "student" as Role,
-            assignedAdminId: null,
-            language: "en",
-            theme: "system",
-            isActive: true,
-            photoURL: null,
-            notificationsEnabled: true,
-            createdAt: serverTimestamp(),
+        try {
+          const exists = await getDoc(ref);
+          if (!exists.exists()) {
+            await setDoc(ref, {
+              id: cred.user.uid,
+              fullName: d.fullName.trim(),
+              email: d.email.trim(),
+              phone: d.phone.trim(),
+              gender: d.gender,
+              role: "student" as Role,
+              assignedAdminId: null,
+              language: "en",
+              theme: "system",
+              isActive: true,
+              photoURL: null,
+              notificationsEnabled: true,
+              createdAt: serverTimestamp(),
+            });
+          }
+        } catch (err) {
+          // Roll back the auth user so no orphan account is left behind
+          try {
+            await deleteUser(cred.user);
+          } catch {
+            // best effort
+          }
+          const e = err as { code?: string; message?: string };
+          if (e?.code === "permission-denied") {
+            throw new Error(
+              "Account could not be created: database permissions are not configured. Please contact the administrator.",
+            );
+          }
+          throw new Error(e?.message ?? "Failed to create account");
+        }
+        // Send verification email (non-blocking — failure shouldn't break signup)
+        try {
+          await sendEmailVerification(cred.user, {
+            url: window.location.origin + "/login",
           });
+        } catch {
+          // ignore
         }
       },
       signOut: async () => {
