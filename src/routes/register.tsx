@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PasswordInput } from "@/components/password-input";
+import { GoogleButton } from "@/components/google-button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/humsj-logo.png";
