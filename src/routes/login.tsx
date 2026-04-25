@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
+import { PasswordInput } from "@/components/password-input";
+import { GoogleButton } from "@/components/google-button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/humsj-logo.png";
@@ -74,9 +76,8 @@ function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">{t("auth.password")}</Label>
-                <Input
+                <PasswordInput
                   id="password"
-                  type="password"
                   required
                   autoComplete="current-password"
                   minLength={6}
@@ -94,15 +95,7 @@ function LoginPage() {
               {t("auth.or")}
               <div className="h-px flex-1 bg-border" />
             </div>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={onGoogle}
-              disabled={busy}
-            >
-              {t("auth.google")}
-            </Button>
+            <GoogleButton onClick={onGoogle} loading={busy} label={t("auth.google")} />
             <p className="mt-6 text-center text-sm text-muted-foreground">
               {t("auth.noAccount")}{" "}
               <Link to="/register" className="font-medium text-primary hover:underline">

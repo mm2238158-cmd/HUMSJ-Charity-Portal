@@ -13,6 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PasswordInput } from "@/components/password-input";
+import { GoogleButton } from "@/components/google-button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import logo from "@/assets/humsj-logo.png";
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/register")({
 
 function RegisterPage() {
   const { t } = useTranslation();
-  const { signUp } = useAuth();
+  const { signUp, signInGoogle } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -41,7 +43,19 @@ function RegisterPage() {
     setBusy(true);
     try {
       await signUp({ fullName, phone, gender, email, password });
-      toast.success(t("common.success"));
+      toast.success(t("auth.accountCreated"));
+      navigate({ to: "/" });
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onGoogle = async () => {
+    setBusy(true);
+    try {
+      await signInGoogle();
       navigate({ to: "/" });
     } catch (err) {
       toast.error((err as Error).message);
@@ -87,13 +101,19 @@ function RegisterPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">{t("auth.password")}</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
+                <PasswordInput id="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} autoComplete="new-password" />
               </div>
               <Button type="submit" className="w-full" disabled={busy}>
                 {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {t("auth.signUp")}
               </Button>
             </form>
+            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="h-px flex-1 bg-border" />
+              {t("auth.or")}
+              <div className="h-px flex-1 bg-border" />
+            </div>
+            <GoogleButton onClick={onGoogle} loading={busy} label={t("auth.google")} />
             <p className="mt-6 text-center text-sm text-muted-foreground">
               {t("auth.haveAccount")}{" "}
               <Link to="/login" className="font-medium text-primary hover:underline">
