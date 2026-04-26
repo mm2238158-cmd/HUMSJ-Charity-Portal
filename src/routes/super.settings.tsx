@@ -14,6 +14,7 @@ import { doc, setDoc, Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { seedDemoData } from "@/lib/seed";
 import { ensureCurrentMonth, type DeadlineDay } from "@/lib/months";
+import { rebalanceAssignments } from "@/lib/assignment";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/super/settings")({
