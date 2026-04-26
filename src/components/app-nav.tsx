@@ -25,6 +25,7 @@ export function useNavItems(): NavItem[] {
   if (role === "super-admin") {
     return [
       { to: "/super", icon: LayoutDashboard, label: t("nav.dashboard") },
+      { to: "/super/contributions", icon: CheckCircle2, label: t("nav.approvals") },
       { to: "/super/users", icon: Users, label: t("nav.users") },
       { to: "/super/admins", icon: Shield, label: t("nav.admins") },
       { to: "/super/settings", icon: SettingsIcon, label: t("nav.settings") },
