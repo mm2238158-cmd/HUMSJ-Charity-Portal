@@ -26,6 +26,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { pickAdminForGenderFromDb } from "@/lib/assignment";
 import type { Gender, Role, UserDoc } from "@/lib/types";
 
 interface SignUpData {
@@ -105,14 +106,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ref,
       async (snap) => {
         if (!snap.exists()) {
+          // Google sign-in bootstrap: assign default gender=male; super-admin can correct later.
+          // Try same-gender admin pick.
+          const defaultGender: Gender = "male";
+          let assigned: string | null = null;
+          try {
+            assigned = await pickAdminForGenderFromDb(defaultGender);
+          } catch {
+            assigned = null;
+          }
           const newDoc: Omit<UserDoc, "createdAt"> & { createdAt: unknown } = {
             id: user.uid,
             fullName: user.displayName ?? user.email?.split("@")[0] ?? "User",
             email: (user.email ?? "").toLowerCase(),
             phone: "",
-            gender: "male",
+            gender: defaultGender,
             role: "student",
-            assignedAdminId: null,
+            assignedAdminId: assigned,
             language: "en",
             theme: "system",
             isActive: true,
@@ -205,6 +215,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const ref = doc(db, "users", cred.user.uid);
         try {
+          // Auto-assign a same-gender admin (load-balanced). Null if none exist yet.
+          let assigned: string | null = null;
+          try {
+            assigned = await pickAdminForGenderFromDb(d.gender);
+          } catch {
+            assigned = null;
+          }
           const exists = await getDoc(ref);
           if (!exists.exists()) {
             await setDoc(ref, {
@@ -214,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phone: d.phone.trim(),
               gender: d.gender,
               role: "student" as Role,
-              assignedAdminId: null,
+              assignedAdminId: assigned,
               language: "en",
               theme: "system",
               isActive: true,

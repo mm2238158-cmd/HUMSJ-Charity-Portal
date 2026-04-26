@@ -14,6 +14,7 @@ import { doc, setDoc, Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { seedDemoData } from "@/lib/seed";
 import { ensureCurrentMonth, type DeadlineDay } from "@/lib/months";
+import { rebalanceAssignments } from "@/lib/assignment";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/super/settings")({
@@ -31,6 +32,7 @@ function SuperSettings() {
   const [busy, setBusy] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [rolling, setRolling] = useState(false);
+  const [rebalancing, setRebalancing] = useState(false);
 
   // new month form
   const [mName, setMName] = useState("");
@@ -153,6 +155,29 @@ function SuperSettings() {
             <Button variant="outline" onClick={runRollover} disabled={rolling}>
               {rolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("superAdmin.rolloverNow")}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                setRebalancing(true);
+                try {
+                  const r = await rebalanceAssignments();
+                  toast.success(
+                    `${t("superAdmin.rebalanced")}: ${r.updated}` +
+                      (r.unassignableMale + r.unassignableFemale > 0
+                        ? ` (♂${r.unassignableMale} ♀${r.unassignableFemale} ${t("superAdmin.unassignable")})`
+                        : ""),
+                  );
+                } catch (err) {
+                  toast.error((err as Error).message);
+                } finally {
+                  setRebalancing(false);
+                }
+              }}
+              disabled={rebalancing}
+            >
+              {rebalancing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("superAdmin.rebalance")}
             </Button>
           </div>
         </CardContent>

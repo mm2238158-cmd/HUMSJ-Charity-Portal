@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAllUsers, useAllContributions, useActiveMonth } from "@/lib/data-hooks";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { Users, Wallet, Activity, Shield } from "lucide-react";
+import { Users, Wallet, Activity, Shield, Clock } from "lucide-react";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/super/")({
@@ -21,15 +21,19 @@ function SuperDashboard() {
       .reduce((s, c) => s + (c.amount ?? 0), 0);
     const admins = users.filter((u) => u.role === "admin").length;
     const students = users.filter((u) => u.role === "student").length;
-    return { totalThisMonth, admins, students };
+    const pending = items.filter((c) => c.status === "pending").length;
+    return { totalThisMonth, admins, students, pending };
   }, [items, month?.id, users]);
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("nav.dashboard")}</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Tile icon={<Users className="h-4 w-4" />} label={t("superAdmin.totalUsers")} value={String(users.length)} />
         <Tile icon={<Wallet className="h-4 w-4" />} label={t("superAdmin.totalContributions")} value={`${stats.totalThisMonth} ETB`} accent="success" />
+        <Link to="/super/contributions" className="contents">
+          <Tile icon={<Clock className="h-4 w-4" />} label={t("superAdmin.pendingAcrossAll")} value={String(stats.pending)} accent={stats.pending > 0 ? "warn" : undefined} />
+        </Link>
         <Tile icon={<Shield className="h-4 w-4" />} label={t("nav.admins")} value={String(stats.admins)} />
         <Tile icon={<Activity className="h-4 w-4" />} label={t("common.student")} value={String(stats.students)} />
       </div>
@@ -54,8 +58,13 @@ function SuperDashboard() {
   );
 }
 
-function Tile({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: "success" }) {
-  const bg = accent === "success" ? "bg-success/10 text-success" : "bg-primary/10 text-primary";
+function Tile({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: "success" | "warn" }) {
+  const bg =
+    accent === "success"
+      ? "bg-success/10 text-success"
+      : accent === "warn"
+      ? "bg-warning/15 text-warning"
+      : "bg-primary/10 text-primary";
   return (
     <Card className="shadow-soft">
       <CardContent className="p-5">
