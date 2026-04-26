@@ -28,9 +28,12 @@ function SuperDashboard() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">{t("nav.dashboard")}</h1>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <Tile icon={<Users className="h-4 w-4" />} label={t("superAdmin.totalUsers")} value={String(users.length)} />
         <Tile icon={<Wallet className="h-4 w-4" />} label={t("superAdmin.totalContributions")} value={`${stats.totalThisMonth} ETB`} accent="success" />
+        <Link to="/super/contributions" className="contents">
+          <Tile icon={<Clock className="h-4 w-4" />} label={t("superAdmin.pendingAcrossAll")} value={String(stats.pending)} accent={stats.pending > 0 ? "warn" : undefined} />
+        </Link>
         <Tile icon={<Shield className="h-4 w-4" />} label={t("nav.admins")} value={String(stats.admins)} />
         <Tile icon={<Activity className="h-4 w-4" />} label={t("common.student")} value={String(stats.students)} />
       </div>
