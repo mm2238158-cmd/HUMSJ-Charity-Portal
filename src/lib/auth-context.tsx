@@ -106,14 +106,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ref,
       async (snap) => {
         if (!snap.exists()) {
+          // Google sign-in bootstrap: assign default gender=male; super-admin can correct later.
+          // Try same-gender admin pick.
+          const defaultGender: Gender = "male";
+          let assigned: string | null = null;
+          try {
+            assigned = await pickAdminForGenderFromDb(defaultGender);
+          } catch {
+            assigned = null;
+          }
           const newDoc: Omit<UserDoc, "createdAt"> & { createdAt: unknown } = {
             id: user.uid,
             fullName: user.displayName ?? user.email?.split("@")[0] ?? "User",
             email: (user.email ?? "").toLowerCase(),
             phone: "",
-            gender: "male",
+            gender: defaultGender,
             role: "student",
-            assignedAdminId: null,
+            assignedAdminId: assigned,
             language: "en",
             theme: "system",
             isActive: true,
