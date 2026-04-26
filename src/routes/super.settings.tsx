@@ -156,6 +156,29 @@ function SuperSettings() {
               {rolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {t("superAdmin.rolloverNow")}
             </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                setRebalancing(true);
+                try {
+                  const r = await rebalanceAssignments();
+                  toast.success(
+                    `${t("superAdmin.rebalanced")}: ${r.updated}` +
+                      (r.unassignableMale + r.unassignableFemale > 0
+                        ? ` (♂${r.unassignableMale} ♀${r.unassignableFemale} ${t("superAdmin.unassignable")})`
+                        : ""),
+                  );
+                } catch (err) {
+                  toast.error((err as Error).message);
+                } finally {
+                  setRebalancing(false);
+                }
+              }}
+              disabled={rebalancing}
+            >
+              {rebalancing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("superAdmin.rebalance")}
+            </Button>
           </div>
         </CardContent>
       </Card>
