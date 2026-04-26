@@ -56,22 +56,34 @@ function SuperUsers() {
           <CardContent className="p-0">
             <table className="w-full text-sm">
               <thead className="text-left text-xs uppercase text-muted-foreground border-b border-border">
-                <tr><th className="px-4 py-3">{t("common.name")}</th><th className="px-4 py-3 hidden md:table-cell">{t("auth.email")}</th><th className="px-4 py-3">{t("common.role")}</th><th className="px-4 py-3">{t("common.status")}</th><th className="px-4 py-3">{t("common.actions")}</th></tr>
+                <tr><th className="px-4 py-3">{t("common.name")}</th><th className="px-4 py-3 hidden md:table-cell">{t("auth.email")}</th><th className="px-4 py-3">{t("auth.gender")}</th><th className="px-4 py-3">{t("common.role")}</th><th className="px-4 py-3">{t("common.status")}</th><th className="px-4 py-3">{t("common.actions")}</th></tr>
               </thead>
               <tbody>
-                {filtered.map((u) => (
-                  <tr key={u.id} className="border-b border-border last:border-0">
-                    <td className="px-4 py-3 font-medium">{u.fullName}</td>
-                    <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{u.email}</td>
-                    <td className="px-4 py-3 text-xs capitalize">{u.role}</td>
-                    <td className="px-4 py-3"><StatusBadge status={u.isActive ? "active" : "inactive"} /></td>
-                    <td className="px-4 py-3">
-                      <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
-                        {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((u) => {
+                  const assigned = users.find((a) => a.id === u.assignedAdminId);
+                  const mismatch = u.role === "student" && assigned && assigned.gender !== u.gender;
+                  return (
+                    <tr key={u.id} className="border-b border-border last:border-0">
+                      <td className="px-4 py-3 font-medium">
+                        {u.fullName}
+                        {mismatch && (
+                          <span className="ml-2 text-[10px] font-semibold text-orange-500" title={t("superAdmin.genderMismatch")}>
+                            ⚠ {t("superAdmin.mismatch")}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 hidden md:table-cell text-muted-foreground">{u.email}</td>
+                      <td className="px-4 py-3 text-xs capitalize">{u.gender}</td>
+                      <td className="px-4 py-3 text-xs capitalize">{u.role}</td>
+                      <td className="px-4 py-3"><StatusBadge status={u.isActive ? "active" : "inactive"} /></td>
+                      <td className="px-4 py-3">
+                        <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
+                          {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </CardContent>
