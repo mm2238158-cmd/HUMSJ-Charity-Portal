@@ -54,11 +54,20 @@ export function SettingsPage() {
   const onPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error(t("settings.avatarTooLarge"));
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      toast.error(t("common.error"));
+      return;
+    }
     setBusy(true);
     try {
-      const path = `avatars/${user.uid}.jpg`;
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+      const path = `avatars/${user.uid}/avatar.${ext}`;
       const sRef = ref(storage, path);
-      await uploadBytes(sRef, file);
+      await uploadBytes(sRef, file, { contentType: file.type });
       const url = await getDownloadURL(sRef);
       await updateDoc(doc(db, "users", user.uid), { photoURL: url });
       toast.success(t("settings.saved"));
