@@ -32,6 +32,7 @@ function SuperSettings() {
   const [busy, setBusy] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [rolling, setRolling] = useState(false);
+  const [rebalancing, setRebalancing] = useState(false);
 
   // new month form
   const [mName, setMName] = useState("");
