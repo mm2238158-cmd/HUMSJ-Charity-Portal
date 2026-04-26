@@ -35,12 +35,18 @@ export function SettingsPage() {
 
   if (!user || !profile) return null;
 
+  const ETHIOPIAN_PHONE = /^\+251(7|9)\d{8}$/;
+
   const save = async () => {
+    if (phone && !ETHIOPIAN_PHONE.test(phone.trim())) {
+      toast.error(t("auth.phoneFormat"));
+      return;
+    }
     setBusy(true);
     try {
       await updateDoc(doc(db, "users", user.uid), {
         fullName: name,
-        phone,
+        phone: phone.trim(),
         notificationsEnabled: notifEnabled,
       });
       toast.success(t("settings.saved"));

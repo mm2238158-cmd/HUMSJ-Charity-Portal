@@ -36,15 +36,18 @@ function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [busy, setBusy] = useState(false);
 
+  const ETHIOPIAN_PHONE = /^\+251(7|9)\d{8}$/;
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim()) return toast.error(t("auth.nameRequired"));
     if (!phone.trim()) return toast.error(t("auth.phoneRequired"));
+    if (!ETHIOPIAN_PHONE.test(phone.trim())) return toast.error(t("auth.phoneFormat"));
     if (password.length < 6) return toast.error(t("auth.passwordShort"));
     if (password !== confirmPassword) return toast.error(t("auth.passwordMismatch"));
     setBusy(true);
     try {
-      const result = await signUp({ fullName, phone, gender, email, password });
+      const result = await signUp({ fullName, phone: phone.trim(), gender, email, password });
       if (result.verificationSent) {
         toast.success(t("auth.accountCreated"));
       } else {
