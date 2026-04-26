@@ -43,6 +43,7 @@ export interface ContributionDoc {
   approvedAt?: Timestamp | null;
   approvedBy?: string | null;
   rejectionReason?: string | null;
+  late?: boolean;
 }
 
 export interface NotificationDoc {
@@ -59,4 +60,5 @@ export interface SettingsDoc {
   contributionAmount: number;
   reminderDaysBefore: number;
   allowLatePayment: boolean;
+  collectionDeadlineDay?: 28 | 29 | 30;
 }
