@@ -133,11 +133,28 @@ function SuperSettings() {
               <Label>{t("superAdmin.allowLate")}</Label>
               <div className="flex h-9 items-center"><Switch checked={allowLate} onCheckedChange={setAllowLate} /></div>
             </div>
+            <div className="space-y-2">
+              <Label>{t("superAdmin.deadlineDay")}</Label>
+              <Select value={String(deadlineDay)} onValueChange={(v) => setDeadlineDay(Number(v) as DeadlineDay)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="28">28</SelectItem>
+                  <SelectItem value="29">29</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Button onClick={saveSettings} disabled={busy}>
-            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("settings.save")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={saveSettings} disabled={busy}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("settings.save")}
+            </Button>
+            <Button variant="outline" onClick={runRollover} disabled={rolling}>
+              {rolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("superAdmin.rolloverNow")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
