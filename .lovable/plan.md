@@ -1,189 +1,173 @@
-# Storage rules, automatic month rollover, avatar fix, and a recommendation on phone verification
+# Gender-matched assignment + Super-admin contribution control
 
-## 1. Phone verification — my recommendation: **don't add it (yet)**
+## 1. How assignment works **today** (audit)
 
-Email verification is enough for this app, and adding Firebase Phone Auth would actually **hurt** the project right now. Here's why:
+I traced every place `assignedAdminId` is set or read. There is currently **no automatic assignment** — and **gender is completely ignored**:
 
-- **It costs real money.** Firebase Phone Auth bills per SMS (≈ $0.01–$0.06 per message depending on country). For a charity portal with hundreds of students that's a recurring expense with no upside.
-- **It needs the Blaze (paid) plan.** Your project is on Spark (free). Phone Auth is disabled until a billing account is attached.
-- **It needs reCAPTCHA Enterprise + an App Check key**, plus Ethiopian carrier deliverability is unreliable — many `+251` numbers silently drop SMS.
-- **You already verify identity** by (a) verified email + (b) admin approval of every payment screenshot. A bad actor with a fake phone number can't actually do anything in the system without an admin approving them.
-- **Phone is collected for contact, not auth.** The phone field is used so the assigned admin can reach the student — it doesn't need to be cryptographically proven.
 
-If you ever do want it later, the right fix is enabling Phone Auth in the Firebase console + adding a one-tap OTP modal post-signup — that's a 1-hour add-on we can do anytime. **For now I'll leave it out** and instead add light client-side validation: require `+2519XXXXXXXX` / `+2517XXXXXXXX` format (Ethiopian mobile pattern), 13 chars total, on register and settings forms, so users can't enter obvious junk.
+| Where                                          | What happens                                                                           |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `auth-context.tsx` signup (line 217)           | New student saved with `assignedAdminId: null`                                         |
+| `auth-context.tsx` Google bootstrap (line 115) | Same — `null`                                                                          |
+| `super.admins.tsx` (line 114)                  | Super-admin must manually pick an admin from a `<Select>` for each student, one by one |
+| `super.admins.tsx` reassign (line 55)          | Bulk reassigns *all* of one admin's students to another admin — still ignores gender   |
+| `seed.ts` (line 74)                            | Demo data uses `adminIds[i % adminIds.length]` — round-robin, gender-blind             |
 
-## 2. Automatic monthly month creation
 
-Right now months only appear when a super-admin manually clicks "Create month". We can make it automatic **without** Cloud Functions (which would require the paid plan) by doing it client-side, lazily, when the app loads:
+**Consequence:** every newly registered student has `assignedAdminId: null`, so they cannot submit a payment (the `app.pay.tsx` flow writes `adminId: profile.assignedAdminId ?? null`, and the admin's "Pending approvals" list filters by `where("adminId", "==", user.uid)` — meaning **no admin ever sees that student's submission**). Your stated rule "male admins for male students, female admins for female students" is not enforced anywhere.
 
-- New helper `ensureCurrentMonth()` in `src/lib/months.ts`:
-  - Computes the current calendar month id `YYYY-MM`.
-  - Reads `settings/global.collectionDeadlineDay` (new field, default `28`, configurable to 28/29/30 by super-admin).
-  - If `months/{currentId}` doesn't exist, creates it with:
-    - `name`: localized `"April 2026"` style
-    - `startDate`: 1st of the month
-    - `dueDate`: deadline day (clamped — e.g. February: min(28, last-day-of-month))
-    - `isActive: true`
-  - Atomically deactivates any other month that's `isActive`.
-  - Uses a Firestore **transaction** so two tabs opening simultaneously can't create duplicates.
-- Hooked into `AuthProvider` so it runs once per session as soon as a verified user is signed in (any role triggers it; rule allows `create` only by super-admin — see §4 — but a no-op `getDoc` first means students just read, super-admins write). To avoid every student hitting it, only call it when `profile.role === "super-admin"` OR when no active month exists at all (race-safe via the transaction).
-- Super-admin settings page gets a **"Collection deadline day"** select (28 / 29 / 30) and a **"Run rollover now"** button (manual override).
-- Existing **"Create month"** form stays for back-fills/special cases.
+## 2. Fix — gender-matched auto-assignment
 
-### Late payment & deadline behavior
+### A. New helper `src/lib/assignment.ts`
 
-- Pay page already blocks duplicate submissions per active month — keeping that.
-- Add a "Deadline: {dueDate}" badge on the pay screen.
-- If `now > dueDate` and `settings.allowLatePayment === false` → block submit with a clear toast.
-- If `allowLatePayment === true` → submit allowed but tag the contribution `late: true` and surface an orange "Late" badge in admin/queue views.
+- `pickAdminForGender(gender: Gender, admins: UserDoc[], students: UserDoc[]): string | null`
+- Filters `admins` to `role === "admin" && isActive && gender === student.gender`
+- Among matching admins, picks the one with the **fewest currently assigned students of that gender** (load balancing). Ties broken by `createdAt` ascending for stability.
+- Returns `null` if no same-gender admin exists (caller surfaces a friendly toast instead of silently leaving `null`).
 
-## 3. Avatar upload broken — Firebase **Storage** rules (separate from Firestore rules)
+### B. Auto-assign on signup (`auth-context.tsx`)
 
-Your error is `storage/unauthorized` — that's the **Storage** ruleset, which is a *different file* from the Firestore ruleset you already updated. Storage defaults to "deny all" until you publish a ruleset.
+In `signUp` (and the Google profile bootstrap), after the user picks gender:
 
-**You must paste this in:** [https://console.firebase.google.com/project/humsj-charity-portal/storage/rules](https://console.firebase.google.com/project/humsj-charity-portal/storage/rules)
+1. `getDocs` of `users` where `role == "admin"` and `gender == student.gender` and `isActive == true`
+2. For each candidate, count `users` where `assignedAdminId == candidate.id` (single batched read, or computed from a single `getDocs` of all students of that gender)
+3. Set `assignedAdminId` on the new user doc to the least-loaded match
+4. If no same-gender admin exists yet, save `assignedAdminId: null` and show a toast "Account created — waiting for a {gender} admin to be assigned by super-admin"
 
-```
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
+### C. Re-assign on gender admin promotion / demotion / deletion (`super.admins.tsx`)
 
-    // Each user manages their own avatar at avatars/{uid}.jpg (or .png/.webp)
-    match /avatars/{userId}/{file=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.uid == userId
-                   && request.resource.size < 2 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-    }
-    // Legacy single-file path: avatars/{uid}.jpg — keep working
-    match /avatars/{file} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && file.matches(request.auth.uid + '\\..*')
-                   && request.resource.size < 1 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-    }
+- **Promote student → admin**: when a student is promoted, automatically rebalance — any same-gender students currently sitting on `assignedAdminId: null` get picked up by the new admin.
+- **Remove admin (demote to student)**: their existing students are auto-redistributed to other same-gender admins using the same picker (the current "Reassign" dialog becomes optional manual override). If no same-gender admin remains, assign `null` and notify super-admin.
+- The existing manual `<Select>` in the students table is kept as an **override**, but it now filters its options to *same-gender admins only* (cross-gender selection blocked + tooltip).
 
-    // Payment screenshots — student writes their own, anyone signed in reads
-    // (admin verification needs to view them; tighter access enforced via Firestore on the contribution doc)
-    match /contributions/{userId}/{file=**} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null
-                   && request.auth.uid == userId
-                   && request.resource.size < 1 * 1024 * 1024
-                   && request.resource.contentType.matches('image/.*');
-    }
-  }
-}
-```
+### D. Backfill button in super settings
 
-Notes:
+A one-click **"Rebalance assignments"** button in `/super/settings` that runs the picker over every student with `assignedAdminId == null` *or* where their current admin's gender no longer matches. Useful right now to fix every existing user who was registered before this rule existed.
 
-- I'll also tighten the upload path in `settings-page.tsx` to `avatars/{uid}/avatar.jpg` (matches the recommended folder pattern in your stack-overflow guidance) and keep the legacy single-file rule for back-compat with old uploads.
-- 2 MB cap for avatars, 5 MB for receipts — prevents abuse / runaway storage bills.
-- `image/*` content-type guard prevents users uploading executables disguised as JPGs.
+### E. Type & UI
 
-## 4. Update **all** Firestore rules to match the new features
+- `register.tsx` already collects gender — no schema change needed.
+- Super-admin "Admins" page shows each admin's gender badge so it's obvious who handles whom.
+- `super.users.tsx` table gets a "⚠ Gender mismatch" row warning where applicable.
 
-Your current published rules work for students-only. They need to grow for: super-admin month creation, admin contribution approval, settings writes, and the new `late` flag. Replace your Firestore rules at:
-👉 [https://console.firebase.google.com/project/humsj-charity-portal/firestore/rules](https://console.firebase.google.com/project/humsj-charity-portal/firestore/rules)
+## 3. Super-admin contribution oversight
+
+Today super-admin can see **totals** on `/super` but cannot:
+
+- View the full list of contributions across all admins
+- Approve or reject anything (only the assigned admin can)
+- Override a wrong rejection / approval
+- Reassign a stuck contribution to a different admin
+
+### Changes
+
+**A. New route `src/routes/super.contributions.tsx**` (`/super/contributions`)
+
+- Lists *all* contributions across all admins, with filters: month, status (pending/approved/rejected/late), admin, student name, gender
+- Each row shows: student, gender, admin, month, amount, submitted date, status, screenshot preview
+- **Approve** and **Reject** buttons (with reason dialog) — same logic as admin approval, but works on any contribution regardless of `adminId`
+- **Reassign to different admin** action (drops down list of same-gender admins) — useful when the original admin is unavailable
+- Bulk select + bulk approve for trusted batches
+
+**B. Add nav entry**
+`useNavItems()` in `app-nav.tsx` gets a `super-admin` entry pointing to `/super/contributions` with a `CheckCircle2` icon.
+
+**C. Existing super dashboard (`/super`)**
+Add a 4th tile: **"Pending across all admins"** with a count + click-through to the new contributions page filtered to status=pending.
+
+**D. Notifications**
+When super-admin acts on a contribution, the same notification document is written to the student (and a separate one to the assigned admin so they're not surprised: "Super-admin {name} approved {student}'s {month} contribution").
+
+## 4. Firestore rules update (REQUIRES YOUR ACTION)
+
+Current published rules only let students read/write their own contributions. Admins and super-admins can't update them, which means **the existing approve/reject buttons on `/admin/approvals` are also silently failing for live signups** unless rules are extended. New rules to publish:
 
 ```
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper functions
-    function isSignedIn()    { return request.auth != null; }
-    function myProfile()     { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
-    function myRole()        { return myProfile().role; }
-    function isAdmin()       { return isSignedIn() && myRole() == 'admin'; }
-    function isSuperAdmin()  { return isSignedIn() && myRole() == 'super-admin'; }
-    function isStaff()       { return isAdmin() || isSuperAdmin(); }
+    function isSignedIn() { return request.auth != null; }
+    function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
+    function isAdmin() { return isSignedIn() && userDoc(request.auth.uid).role == 'admin'; }
+    function isSuperAdmin() { return isSignedIn() && userDoc(request.auth.uid).role == 'super-admin'; }
+    function isStaff() { return isAdmin() || isSuperAdmin(); }
 
-    // ---------------- USERS ----------------
     match /users/{userId} {
-      allow read:   if isSignedIn();              // staff lists, plus self
-      allow create: if isSignedIn() && request.auth.uid == userId
-                    && request.resource.data.role == 'student'; // self-signup is always student
-      allow update: if (isSignedIn() && request.auth.uid == userId
-                        // user can edit their own profile but NOT change their role or assigned admin
-                        && request.resource.data.role == resource.data.role
-                        && request.resource.data.assignedAdminId == resource.data.assignedAdminId)
-                    || isSuperAdmin();             // super-admin can change role / reassign
-      allow delete: if isSuperAdmin();
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Self updates OR super-admin updates (role / assignedAdminId changes)
+      allow update: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
+      allow delete: if false;
     }
 
-    // ---------------- MONTHS ----------------
     match /months/{monthId} {
-      allow read:  if isSignedIn();
-      allow write: if isSuperAdmin();              // includes auto-rollover by signed-in super-admin
-    }
-
-    // ---------------- SETTINGS ----------------
-    match /settings/{docId} {
-      allow read:  if isSignedIn();
+      allow read: if isSignedIn();
+      // Super-admin manages months; auto-rollover also runs as super-admin in client
       allow write: if isSuperAdmin();
     }
 
-    // ---------------- CONTRIBUTIONS ----------------
+    match /settings/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isSuperAdmin();
+    }
+
     match /contributions/{id} {
-      allow read:   if isSignedIn() && (
-                       resource.data.userId == request.auth.uid       // own
-                       || (isAdmin() && resource.data.adminId == request.auth.uid) // assigned admin
-                       || isSuperAdmin()
-                    );
-      allow create: if isSignedIn()
-                    && request.resource.data.userId == request.auth.uid
-                    && request.resource.data.status == 'pending';
-      // Student may update only while still pending (e.g. re-upload screenshot)
-      // Admin/super-admin may approve/reject
+      // Owner reads own; admins read theirs; super-admin reads all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        (isAdmin() && resource.data.adminId == request.auth.uid) ||
+        isSuperAdmin()
+      );
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      // Owner can edit only their own pending; admin can approve/reject theirs; super-admin anything
       allow update: if isSignedIn() && (
-                       (resource.data.userId == request.auth.uid && resource.data.status == 'pending')
-                       || (isAdmin() && resource.data.adminId == request.auth.uid)
-                       || isSuperAdmin()
-                    );
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        (isAdmin() && resource.data.adminId == request.auth.uid) ||
+        isSuperAdmin()
+      );
       allow delete: if isSuperAdmin();
     }
 
-    // ---------------- NOTIFICATIONS ----------------
     match /notifications/{id} {
       allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn();              // any user/admin can create a notification for someone
+      allow create: if isSignedIn();
       allow delete: if isSuperAdmin();
     }
   }
 }
 ```
 
-Key changes vs. the current ruleset you have published:
+Storage rules stay as the previous round.
 
-1. Added `isAdmin / isSuperAdmin / isStaff` helpers driven by the user's own profile doc — no custom claims needed (works on Spark plan).
-2. Months and settings are now writable by super-admins (needed for auto-rollover and global settings UI).
-3. Contributions are readable by the assigned admin and writable by them for approval.
-4. Self-signup is locked to `role: 'student'` — users can't promote themselves by editing the create payload.
-5. Users can't change their own `role` or `assignedAdminId` on the client — only super-admin can.
+## 5. Files to be created / edited
 
-## 5. Code changes I'll make in this loop
+**Create**
 
+- `src/lib/assignment.ts` — same-gender admin picker
+- `src/routes/super.contributions.tsx` — global oversight page
 
-| File                                       | Change                                                                                            |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `src/lib/months.ts` (new)                  | `ensureCurrentMonth()` transaction; `formatMonthName(locale, date)`; deadline-day clamp helper    |
-| `src/lib/auth-context.tsx`                 | Call `ensureCurrentMonth()` once after profile loads (super-admin)                                |
-| `src/lib/types.ts`                         | Add `collectionDeadlineDay: 28|29|30` to `SettingsDoc`; add `late?: boolean` to `ContributionDoc` |
-| `src/routes/super.settings.tsx`            | Deadline-day select; "Run rollover now" button                                                    |
-| `src/routes/app.pay.tsx`                   | Show deadline; block / mark-late on submit; phone-format hint removed (handled in register)       |
-| `src/components/settings-page.tsx`         | Path → `avatars/{uid}/avatar.jpg`; client-side phone validation; size check                       |
-| `src/routes/register.tsx`                  | Ethiopian phone-format validation (`^251(7                                                        |
-| `src/i18n/locales/en.ts`, `am.ts`, `om.ts` | Strings: `phoneFormat`, `deadline`, `late`, `rolloverNow`, `deadlineDay`, `avatarTooLarge`        |
+**Edit**
 
+- `src/lib/auth-context.tsx` — call picker on signup + Google bootstrap
+- `src/routes/super.admins.tsx` — auto-redistribute on promote/demote, gender-filtered manual override, gender badges
+- `src/routes/super.index.tsx` — add "Pending across all admins" tile + link
+- `src/routes/super.settings.tsx` — add "Rebalance assignments" button
+- `src/routes/super.users.tsx` — gender mismatch warning
+- `src/components/app-nav.tsx` — add super-admin contributions nav item
+- `src/i18n/locales/{en,am,om}.ts` — strings: `noSameGenderAdmin`, `genderMismatch`, `rebalance`, `rebalanced`, `superContributions`, `reassignAdmin`, `crossGenderBlocked`
 
-## 6. What you must do (cannot be done from code)
+**You (Firebase Console)**
 
-1. **Publish the Firebase Storage rules** in §3 (this is what's blocking the avatar upload right now).
-2. **Replace the Firestore rules** with the expanded set in §4 (your current rules work but lock out admin/super-admin features I'm about to ship).
-3. (Optional) confirm Google sign-in is still enabled and the Lovable domains are still in **Authorized domains** from the previous round.
+- Publish the updated Firestore rules above
 
-Both rule files live in the Firebase Console, take ~30 seconds to publish, and don't require a redeploy. **THE PROJECT IS IN *BLAZE PLAN!*! NOT IN *FREE PLAN*.**
+## 6. Open questions before I implement
+
+1. **What should happen to a student who registers and there is no same-gender admin yet?** Recommended: save `assignedAdminId: null`, show the student a "pending admin assignment" notice on `/app`, and surface them to super-admin in a "Needs assignment" list. Confirm or pick a different fallback.
+2. **Cross-gender override for super-admin?** Currently I'll block the manual cross-gender select. If you ever want to allow it (e.g., temporary coverage), say so and I'll add a confirmation dialog instead of an outright block.
+3. **Super-admin acting as approver — should the contribution still show `approvedBy: superAdminUid` or should it also blank `adminId` to reassign accountability?** Recommended: keep original `adminId`, set `approvedBy` to super-admin's uid so the audit trail is honest.  
+  
+ANSWERS  
+1. DO THE RECOMMENDED ONE!  
+2. **Cross-gender override for super-admin IS IMPORTANT**  
+3.  DO THE RECOMMENDED ONE!
