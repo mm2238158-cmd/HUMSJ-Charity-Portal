@@ -26,6 +26,7 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { pickAdminForGenderFromDb } from "@/lib/assignment";
 import type { Gender, Role, UserDoc } from "@/lib/types";
 
 interface SignUpData {
