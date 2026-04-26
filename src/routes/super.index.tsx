@@ -21,7 +21,8 @@ function SuperDashboard() {
       .reduce((s, c) => s + (c.amount ?? 0), 0);
     const admins = users.filter((u) => u.role === "admin").length;
     const students = users.filter((u) => u.role === "student").length;
-    return { totalThisMonth, admins, students };
+    const pending = items.filter((c) => c.status === "pending").length;
+    return { totalThisMonth, admins, students, pending };
   }, [items, month?.id, users]);
 
   return (
