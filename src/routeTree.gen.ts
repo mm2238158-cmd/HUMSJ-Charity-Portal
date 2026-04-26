@@ -21,6 +21,7 @@ import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as SuperUsersRouteImport } from './routes/super.users'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperNotificationsRouteImport } from './routes/super.notifications'
+import { Route as SuperContributionsRouteImport } from './routes/super.contributions'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPayRouteImport } from './routes/app.pay'
@@ -91,6 +92,11 @@ const SuperNotificationsRoute = SuperNotificationsRouteImport.update({
   path: '/notifications',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperContributionsRoute = SuperContributionsRouteImport.update({
+  id: '/contributions',
+  path: '/contributions',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperAdminsRoute = SuperAdminsRouteImport.update({
   id: '/admins',
   path: '/admins',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/users': typeof SuperUsersRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/users': typeof SuperUsersRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
   '/super/users': typeof SuperUsersRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
     | '/super/users'
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
     | '/super/users'
@@ -265,6 +276,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
     | '/super/users'
@@ -366,6 +378,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/super/notifications'
       preLoaderRoute: typeof SuperNotificationsRouteImport
+      parentRoute: typeof SuperRoute
+    }
+    '/super/contributions': {
+      id: '/super/contributions'
+      path: '/contributions'
+      fullPath: '/super/contributions'
+      preLoaderRoute: typeof SuperContributionsRouteImport
       parentRoute: typeof SuperRoute
     }
     '/super/admins': {
@@ -472,6 +491,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperContributionsRoute: typeof SuperContributionsRoute
   SuperNotificationsRoute: typeof SuperNotificationsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
   SuperUsersRoute: typeof SuperUsersRoute
@@ -480,6 +500,7 @@ interface SuperRouteChildren {
 
 const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
+  SuperContributionsRoute: SuperContributionsRoute,
   SuperNotificationsRoute: SuperNotificationsRoute,
   SuperSettingsRoute: SuperSettingsRoute,
   SuperUsersRoute: SuperUsersRoute,
