@@ -94,7 +94,7 @@ function RegisterPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label htmlFor="phone">{t("auth.phone")}</Label>
-                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required />
+                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+251912345678" inputMode="tel" />
                 </div>
                 <div className="space-y-2">
                   <Label>{t("auth.gender")}</Label>
