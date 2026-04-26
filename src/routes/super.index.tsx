@@ -58,8 +58,13 @@ function SuperDashboard() {
   );
 }
 
-function Tile({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: "success" }) {
-  const bg = accent === "success" ? "bg-success/10 text-success" : "bg-primary/10 text-primary";
+function Tile({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent?: "success" | "warn" }) {
+  const bg =
+    accent === "success"
+      ? "bg-success/10 text-success"
+      : accent === "warn"
+      ? "bg-warning/15 text-warning"
+      : "bg-primary/10 text-primary";
   return (
     <Card className="shadow-soft">
       <CardContent className="p-5">
