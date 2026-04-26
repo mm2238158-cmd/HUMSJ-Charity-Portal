@@ -48,6 +48,7 @@ const en = {
     confirmPassword: "Confirm password",
     passwordMismatch: "Passwords don't match",
     verifySendFailed: "Account created, but the verification email couldn't be sent. Sign in and tap Resend once your admin authorizes this domain.",
+    phoneFormat: "Use Ethiopian format: +2519XXXXXXXX or +2517XXXXXXXX",
   },
   status: {
     paid: "Paid",
@@ -73,6 +74,8 @@ const en = {
     noHistory: "No contributions yet",
     alreadyPaid: "You have already submitted for this month",
     rejectionReason: "Rejection reason",
+    deadline: "Deadline",
+    deadlinePassed: "The deadline for this month has passed.",
   },
   admin: {
     assignedUsers: "Assigned users",
@@ -109,6 +112,9 @@ const en = {
     startDate: "Start date",
     dueDate: "Due date",
     setActive: "Set active",
+    deadlineDay: "Collection deadline day",
+    rolloverNow: "Run rollover now",
+    rolledOver: "Current month is ready",
   },
   settings: {
     title: "Settings",
@@ -122,6 +128,7 @@ const en = {
     enableReminders: "Enable reminders",
     save: "Save changes",
     saved: "Settings saved",
+    avatarTooLarge: "Image must be smaller than 2 MB",
   },
   notifications: {
     title: "Notifications",
