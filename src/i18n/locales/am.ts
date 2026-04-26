@@ -50,6 +50,7 @@ const am: Translations = {
     confirmPassword: "የይለፍ ቃል ያረጋግጡ",
     passwordMismatch: "የይለፍ ቃላት አይዛመዱም",
     verifySendFailed: "መለያ ተፈጥሯል፣ ግን የማረጋገጫ ኢሜይል ሊላክ አልቻለም። ይግቡና ጎራው ሲፈቀድ 'እንደገና ላክ' ይጫኑ።",
+    phoneFormat: "የኢትዮጵያ ቅርጸት ይጠቀሙ: +2519XXXXXXXX ወይም +2517XXXXXXXX",
   },
   status: {
     paid: "ተከፍሏል",
@@ -75,6 +76,8 @@ const am: Translations = {
     noHistory: "ምንም መዋጮ የለም",
     alreadyPaid: "ለዚህ ወር አስገብተሃል",
     rejectionReason: "የመቃወሚያ ምክንያት",
+    deadline: "የመጨረሻ ቀን",
+    deadlinePassed: "የዚህ ወር የመጨረሻ ቀን አልፏል።",
   },
   admin: {
     assignedUsers: "የተመደቡ ተጠቃሚዎች",
@@ -111,6 +114,9 @@ const am: Translations = {
     startDate: "የመጀመሪያ ቀን",
     dueDate: "የመጨረሻ ቀን",
     setActive: "ንቁ አድርግ",
+    deadlineDay: "የክፍያ መጨረሻ ቀን",
+    rolloverNow: "አሁን አስተላልፍ",
+    rolledOver: "የአሁኑ ወር ዝግጁ ነው",
   },
   settings: {
     title: "ቅንብሮች",
@@ -124,6 +130,7 @@ const am: Translations = {
     enableReminders: "ማስታወሻዎችን አንቃ",
     save: "ለውጦችን አስቀምጥ",
     saved: "ቅንብሮች ተቀምጠዋል",
+    avatarTooLarge: "ምስሉ ከ2 ሜባ መብለጥ የለበትም",
   },
   notifications: {
     title: "ማሳወቂያዎች",

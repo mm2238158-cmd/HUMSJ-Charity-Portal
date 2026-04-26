@@ -145,6 +145,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, [user]);
 
+  // Auto-create the current calendar month when a super-admin signs in.
+  // Safe no-op if the month already exists & is active.
+  useEffect(() => {
+    if (!profile || profile.role !== "super-admin") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { ensureCurrentMonth } = await import("@/lib/months");
+        const { getDoc, doc: docRef } = await import("firebase/firestore");
+        const settingsSnap = await getDoc(docRef(db, "settings", "global"));
+        const day = (settingsSnap.exists() ? (settingsSnap.data().collectionDeadlineDay as 28 | 29 | 30) : 28) ?? 28;
+        if (cancelled) return;
+        await ensureCurrentMonth(day, profile.language === "am" ? "am-ET" : profile.language === "om" ? "om-ET" : "en-US");
+      } catch {
+        // best effort — surfaced via UI elsewhere
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [profile]);
+
   const refreshUser = useCallback(async () => {
     if (!auth.currentUser) return;
     await auth.currentUser.reload();

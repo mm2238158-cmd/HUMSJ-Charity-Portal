@@ -44,6 +44,9 @@ function PayPage() {
 
   const existing = items.find((c) => c.monthId === month?.id);
 
+  const dueMs = month?.dueDate?.toMillis?.() ?? null;
+  const isLate = dueMs ? Date.now() > dueMs : false;
+
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profile || !month) return;
@@ -59,11 +62,15 @@ function PayPage() {
       toast.error(t("student.amount"));
       return;
     }
+    if (isLate && settings && !settings.allowLatePayment) {
+      toast.error(t("student.deadlinePassed"));
+      return;
+    }
     setBusy(true);
     try {
       const path = `contributions/${user.uid}/${month.id}-${Date.now()}.jpg`;
       const sRef = ref(storage, path);
-      await uploadBytes(sRef, file);
+      await uploadBytes(sRef, file, { contentType: file.type });
       const url = await getDownloadURL(sRef);
 
       const contribId = `${user.uid}_${month.id}`;
@@ -74,6 +81,7 @@ function PayPage() {
         amount,
         screenshotUrl: url,
         status: "pending",
+        late: isLate,
         submittedAt: serverTimestamp(),
         approvedAt: null,
         approvedBy: null,
@@ -116,6 +124,11 @@ function PayPage() {
       <div>
         <h1 className="text-2xl font-bold">{t("student.payContribution")}</h1>
         {month && <p className="text-sm text-muted-foreground">{month.name}</p>}
+        {dueMs && (
+          <p className={`text-xs mt-1 ${isLate ? "text-warning font-medium" : "text-muted-foreground"}`}>
+            {t("student.deadline")}: {new Date(dueMs).toLocaleDateString()} {isLate && `· ${t("status.late")}`}
+          </p>
+        )}
       </div>
 
       {existing && (

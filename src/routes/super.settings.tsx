@@ -7,11 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SettingsPage } from "@/components/settings-page";
 import { toast } from "sonner";
-import { collection, doc, setDoc, Timestamp, writeBatch } from "firebase/firestore";
+import { doc, setDoc, Timestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { seedDemoData } from "@/lib/seed";
+import { ensureCurrentMonth, type DeadlineDay } from "@/lib/months";
 import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/super/settings")({
@@ -25,8 +27,10 @@ function SuperSettings() {
   const [amount, setAmount] = useState(50);
   const [days, setDays] = useState(3);
   const [allowLate, setAllowLate] = useState(true);
+  const [deadlineDay, setDeadlineDay] = useState<DeadlineDay>(28);
   const [busy, setBusy] = useState(false);
   const [seeding, setSeeding] = useState(false);
+  const [rolling, setRolling] = useState(false);
 
   // new month form
   const [mName, setMName] = useState("");
@@ -38,6 +42,7 @@ function SuperSettings() {
       setAmount(settings.contributionAmount);
       setDays(settings.reminderDaysBefore);
       setAllowLate(settings.allowLatePayment);
+      setDeadlineDay((settings.collectionDeadlineDay as DeadlineDay) ?? 28);
     }
   }, [settings]);
 
@@ -48,12 +53,25 @@ function SuperSettings() {
         contributionAmount: amount,
         reminderDaysBefore: days,
         allowLatePayment: allowLate,
+        collectionDeadlineDay: deadlineDay,
       });
       toast.success(t("settings.saved"));
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  const runRollover = async () => {
+    setRolling(true);
+    try {
+      await ensureCurrentMonth(deadlineDay);
+      toast.success(t("superAdmin.rolledOver"));
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setRolling(false);
     }
   };
 
@@ -115,11 +133,28 @@ function SuperSettings() {
               <Label>{t("superAdmin.allowLate")}</Label>
               <div className="flex h-9 items-center"><Switch checked={allowLate} onCheckedChange={setAllowLate} /></div>
             </div>
+            <div className="space-y-2">
+              <Label>{t("superAdmin.deadlineDay")}</Label>
+              <Select value={String(deadlineDay)} onValueChange={(v) => setDeadlineDay(Number(v) as DeadlineDay)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="28">28</SelectItem>
+                  <SelectItem value="29">29</SelectItem>
+                  <SelectItem value="30">30</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <Button onClick={saveSettings} disabled={busy}>
-            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {t("settings.save")}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={saveSettings} disabled={busy}>
+              {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("settings.save")}
+            </Button>
+            <Button variant="outline" onClick={runRollover} disabled={rolling}>
+              {rolling && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {t("superAdmin.rolloverNow")}
+            </Button>
+          </div>
         </CardContent>
       </Card>
 

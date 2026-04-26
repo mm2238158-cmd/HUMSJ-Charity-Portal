@@ -50,6 +50,7 @@ const om: Translations = {
     confirmPassword: "Jecha iccitii mirkaneessi",
     passwordMismatch: "Jechi iccitii wal hin simu",
     verifySendFailed: "Akkaawuntiin uumameera, garuu imeelii mirkaneessaa erguu hin dandeenye. Seenii erga domeenii kun mirkanaa'ee booda 'Deebisii ergi' tuqi.",
+    phoneFormat: "Bifa Itoophiyaa fayyadami: +2519XXXXXXXX ykn +2517XXXXXXXX",
   },
   status: {
     paid: "Kaffalame",
@@ -75,6 +76,8 @@ const om: Translations = {
     noHistory: "Buusii hin jiru",
     alreadyPaid: "Ji'a kanaaf galchitee jirta",
     rejectionReason: "Sababii diddamuu",
+    deadline: "Guyyaa xumuraa",
+    deadlinePassed: "Guyyaan xumuraa ji'a kanaa darbeera.",
   },
   admin: {
     assignedUsers: "Fayyadamtoota Ramadame",
@@ -111,6 +114,9 @@ const om: Translations = {
     startDate: "Guyyaa Jalqabaa",
     dueDate: "Guyyaa Dhumaa",
     setActive: "Hojii irra oolchi",
+    deadlineDay: "Guyyaa xumura kaffaltii",
+    rolloverNow: "Amma raawwadhu",
+    rolledOver: "Ji'i ammaa qophii dha",
   },
   settings: {
     title: "Qindaa'ina",
@@ -124,6 +130,7 @@ const om: Translations = {
     enableReminders: "Yaadachiisaa banuu",
     save: "Olkaa'i",
     saved: "Olkaa'ame",
+    avatarTooLarge: "Suuraan 2 MB caaluu hin qabu",
   },
   notifications: {
     title: "Beeksisaa",
