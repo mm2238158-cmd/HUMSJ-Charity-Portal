@@ -215,6 +215,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         const ref = doc(db, "users", cred.user.uid);
         try {
+          // Auto-assign a same-gender admin (load-balanced). Null if none exist yet.
+          let assigned: string | null = null;
+          try {
+            assigned = await pickAdminForGenderFromDb(d.gender);
+          } catch {
+            assigned = null;
+          }
           const exists = await getDoc(ref);
           if (!exists.exists()) {
             await setDoc(ref, {
@@ -224,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               phone: d.phone.trim(),
               gender: d.gender,
               role: "student" as Role,
-              assignedAdminId: null,
+              assignedAdminId: assigned,
               language: "en",
               theme: "system",
               isActive: true,
