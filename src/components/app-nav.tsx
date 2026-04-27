@@ -50,26 +50,31 @@ export function useNavItems(): NavItem[] {
 export function BottomNav() {
   const items = useNavItems();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const dense = items.length >= 5;
   return (
     <nav
       className="fixed bottom-0 inset-x-0 z-40 border-t border-border bg-card/95 backdrop-blur md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="grid grid-cols-4">
+      <ul
+        className="grid"
+        style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
+      >
         {items.map((it) => {
           const active = path === it.to || (it.to !== "/app" && it.to !== "/admin" && it.to !== "/super" && path.startsWith(it.to));
           const Icon = it.icon;
           return (
-            <li key={it.to}>
+            <li key={it.to} className="min-w-0">
               <Link
                 to={it.to}
                 className={cn(
-                  "flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors",
+                  "flex flex-col items-center gap-1 py-2.5 font-medium transition-colors px-1",
+                  dense ? "text-[10px]" : "text-[11px]",
                   active ? "text-primary" : "text-muted-foreground",
                 )}
               >
-                <Icon className={cn("h-5 w-5", active && "scale-110")} />
-                <span>{it.label}</span>
+                <Icon className={cn(dense ? "h-[18px] w-[18px]" : "h-5 w-5", active && "scale-110")} />
+                <span className="truncate max-w-full">{it.label}</span>
               </Link>
             </li>
           );

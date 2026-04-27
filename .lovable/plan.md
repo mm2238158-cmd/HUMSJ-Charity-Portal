@@ -1,173 +1,48 @@
-# Gender-matched assignment + Super-admin contribution control
+# Mobile UI Fixes — Bottom Nav, Super Users Table, and Responsive Polish
 
-## 1. How assignment works **today** (audit)
+## What's broken (and why)
 
-I traced every place `assignedAdminId` is set or read. There is currently **no automatic assignment** — and **gender is completely ignored**:
+### 1. Bottom tab bar wraps to two rows on mobile (super-admin)
+`src/components/app-nav.tsx` hardcodes `grid-cols-4` in `BottomNav`, but the super-admin role exposes **5** items (Dashboard, Approvals, Users, Admins, Settings). With only 4 columns, the 5th item drops to a second row.
 
+### 2. `/super/users` Action column overflows on mobile
+The page renders a single `<table>` with 6 columns (Name, Email, Gender, Role, Status, Actions). At 390px the row exceeds the viewport — the Action button gets pushed off-screen or clipped. The `<table>` wrapper does scroll horizontally but the Action button is then unreachable without scrolling, which is what the user is seeing.
 
-| Where                                          | What happens                                                                           |
-| ---------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `auth-context.tsx` signup (line 217)           | New student saved with `assignedAdminId: null`                                         |
-| `auth-context.tsx` Google bootstrap (line 115) | Same — `null`                                                                          |
-| `super.admins.tsx` (line 114)                  | Super-admin must manually pick an admin from a `<Select>` for each student, one by one |
-| `super.admins.tsx` reassign (line 55)          | Bulk reassigns *all* of one admin's students to another admin — still ignores gender   |
-| `seed.ts` (line 74)                            | Demo data uses `adminIds[i % adminIds.length]` — round-robin, gender-blind             |
+### 3. Other responsive issues found while auditing
+- `/super` dashboard tiles use `grid-cols-2` with 5 tiles → last tile is alone on its row at mobile (cosmetic, but ugly). Switch to a smarter layout.
+- `/super/admins` "Promote student" table only shows the assignment Select on `sm:` and up, but the row still uses fixed `px-4 py-3` cells that crowd on 390px. Will tighten paddings.
+- Status badges in `/super/contributions` cards (`late` + status side-by-side) can wrap awkwardly inside the header row on narrow screens. Will allow the badges to wrap onto a second line cleanly.
 
+## Plan
 
-**Consequence:** every newly registered student has `assignedAdminId: null`, so they cannot submit a payment (the `app.pay.tsx` flow writes `adminId: profile.assignedAdminId ?? null`, and the admin's "Pending approvals" list filters by `where("adminId", "==", user.uid)` — meaning **no admin ever sees that student's submission**). Your stated rule "male admins for male students, female admins for female students" is not enforced anywhere.
+### Fix A — Bottom nav adapts to item count
+In `src/components/app-nav.tsx`, replace the hardcoded `grid-cols-4` with a dynamic class based on `items.length`:
+- 4 items → `grid-cols-4`
+- 5 items → `grid-cols-5`
+- (future-proof) fallback to `style={{ gridTemplateColumns: \`repeat(${items.length}, minmax(0,1fr))\` }}`
 
-## 2. Fix — gender-matched auto-assignment
+Also slightly reduce label font size to `text-[10px]` and icon size on 5-column layout so labels don't truncate at 360-390px.
 
-### A. New helper `src/lib/assignment.ts`
+### Fix B — Mobile-friendly `/super/users`
+Mirror the pattern already used in `/admin/users`:
+- **Mobile (<md):** render a stacked **card list** (avatar/initial + name + email + gender chip + role + status, with the Activate/Deactivate button as a full-width secondary button at the bottom of each card). Mismatch warning shown inline.
+- **Desktop (md+):** keep the existing table.
 
-- `pickAdminForGender(gender: Gender, admins: UserDoc[], students: UserDoc[]): string | null`
-- Filters `admins` to `role === "admin" && isActive && gender === student.gender`
-- Among matching admins, picks the one with the **fewest currently assigned students of that gender** (load balancing). Ties broken by `createdAt` ascending for stability.
-- Returns `null` if no same-gender admin exists (caller surfaces a friendly toast instead of silently leaving `null`).
+### Fix C — Super dashboard tile grid
+In `src/routes/super.index.tsx`, change `grid-cols-2 lg:grid-cols-5` to `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`. With 5 tiles this gives 2+2+1 on phones (fine) and a clean row of 5 on desktops.
 
-### B. Auto-assign on signup (`auth-context.tsx`)
+### Fix D — Super admins page table padding
+In `src/routes/super.admins.tsx`, change `px-4 py-3` cells to `px-3 py-2` and make the "Promote" button `size="sm"` w-auto (already sm). Also change `<table>` to be wrapped in `overflow-x-auto` for safety.
 
-In `signUp` (and the Google profile bootstrap), after the user picks gender:
+### Fix E — Contribution card header on mobile
+In `src/routes/super.contributions.tsx` line 226, allow the badge group to wrap: change the header `<div className="flex items-center justify-between gap-2">` to allow wrap (`flex-wrap`) and put the badges in a `flex-wrap gap-1 shrink-0` container.
 
-1. `getDocs` of `users` where `role == "admin"` and `gender == student.gender` and `isActive == true`
-2. For each candidate, count `users` where `assignedAdminId == candidate.id` (single batched read, or computed from a single `getDocs` of all students of that gender)
-3. Set `assignedAdminId` on the new user doc to the least-loaded match
-4. If no same-gender admin exists yet, save `assignedAdminId: null` and show a toast "Account created — waiting for a {gender} admin to be assigned by super-admin"
+## Files to edit
+- `src/components/app-nav.tsx` — dynamic columns
+- `src/routes/super.users.tsx` — add mobile card layout
+- `src/routes/super.index.tsx` — tile grid breakpoints
+- `src/routes/super.admins.tsx` — tighter table padding + horizontal scroll wrapper
+- `src/routes/super.contributions.tsx` — badge wrap on narrow screens
 
-### C. Re-assign on gender admin promotion / demotion / deletion (`super.admins.tsx`)
-
-- **Promote student → admin**: when a student is promoted, automatically rebalance — any same-gender students currently sitting on `assignedAdminId: null` get picked up by the new admin.
-- **Remove admin (demote to student)**: their existing students are auto-redistributed to other same-gender admins using the same picker (the current "Reassign" dialog becomes optional manual override). If no same-gender admin remains, assign `null` and notify super-admin.
-- The existing manual `<Select>` in the students table is kept as an **override**, but it now filters its options to *same-gender admins only* (cross-gender selection blocked + tooltip).
-
-### D. Backfill button in super settings
-
-A one-click **"Rebalance assignments"** button in `/super/settings` that runs the picker over every student with `assignedAdminId == null` *or* where their current admin's gender no longer matches. Useful right now to fix every existing user who was registered before this rule existed.
-
-### E. Type & UI
-
-- `register.tsx` already collects gender — no schema change needed.
-- Super-admin "Admins" page shows each admin's gender badge so it's obvious who handles whom.
-- `super.users.tsx` table gets a "⚠ Gender mismatch" row warning where applicable.
-
-## 3. Super-admin contribution oversight
-
-Today super-admin can see **totals** on `/super` but cannot:
-
-- View the full list of contributions across all admins
-- Approve or reject anything (only the assigned admin can)
-- Override a wrong rejection / approval
-- Reassign a stuck contribution to a different admin
-
-### Changes
-
-**A. New route `src/routes/super.contributions.tsx**` (`/super/contributions`)
-
-- Lists *all* contributions across all admins, with filters: month, status (pending/approved/rejected/late), admin, student name, gender
-- Each row shows: student, gender, admin, month, amount, submitted date, status, screenshot preview
-- **Approve** and **Reject** buttons (with reason dialog) — same logic as admin approval, but works on any contribution regardless of `adminId`
-- **Reassign to different admin** action (drops down list of same-gender admins) — useful when the original admin is unavailable
-- Bulk select + bulk approve for trusted batches
-
-**B. Add nav entry**
-`useNavItems()` in `app-nav.tsx` gets a `super-admin` entry pointing to `/super/contributions` with a `CheckCircle2` icon.
-
-**C. Existing super dashboard (`/super`)**
-Add a 4th tile: **"Pending across all admins"** with a count + click-through to the new contributions page filtered to status=pending.
-
-**D. Notifications**
-When super-admin acts on a contribution, the same notification document is written to the student (and a separate one to the assigned admin so they're not surprised: "Super-admin {name} approved {student}'s {month} contribution").
-
-## 4. Firestore rules update (REQUIRES YOUR ACTION)
-
-Current published rules only let students read/write their own contributions. Admins and super-admins can't update them, which means **the existing approve/reject buttons on `/admin/approvals` are also silently failing for live signups** unless rules are extended. New rules to publish:
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-
-    function isSignedIn() { return request.auth != null; }
-    function userDoc(uid) { return get(/databases/$(database)/documents/users/$(uid)).data; }
-    function isAdmin() { return isSignedIn() && userDoc(request.auth.uid).role == 'admin'; }
-    function isSuperAdmin() { return isSignedIn() && userDoc(request.auth.uid).role == 'super-admin'; }
-    function isStaff() { return isAdmin() || isSuperAdmin(); }
-
-    match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      // Self updates OR super-admin updates (role / assignedAdminId changes)
-      allow update: if isSignedIn() && (request.auth.uid == userId || isSuperAdmin());
-      allow delete: if false;
-    }
-
-    match /months/{monthId} {
-      allow read: if isSignedIn();
-      // Super-admin manages months; auto-rollover also runs as super-admin in client
-      allow write: if isSuperAdmin();
-    }
-
-    match /settings/{docId} {
-      allow read: if isSignedIn();
-      allow write: if isSuperAdmin();
-    }
-
-    match /contributions/{id} {
-      // Owner reads own; admins read theirs; super-admin reads all
-      allow read: if isSignedIn() && (
-        resource.data.userId == request.auth.uid ||
-        (isAdmin() && resource.data.adminId == request.auth.uid) ||
-        isSuperAdmin()
-      );
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-      // Owner can edit only their own pending; admin can approve/reject theirs; super-admin anything
-      allow update: if isSignedIn() && (
-        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
-        (isAdmin() && resource.data.adminId == request.auth.uid) ||
-        isSuperAdmin()
-      );
-      allow delete: if isSuperAdmin();
-    }
-
-    match /notifications/{id} {
-      allow read, update: if isSignedIn() && resource.data.userId == request.auth.uid;
-      allow create: if isSignedIn();
-      allow delete: if isSuperAdmin();
-    }
-  }
-}
-```
-
-Storage rules stay as the previous round.
-
-## 5. Files to be created / edited
-
-**Create**
-
-- `src/lib/assignment.ts` — same-gender admin picker
-- `src/routes/super.contributions.tsx` — global oversight page
-
-**Edit**
-
-- `src/lib/auth-context.tsx` — call picker on signup + Google bootstrap
-- `src/routes/super.admins.tsx` — auto-redistribute on promote/demote, gender-filtered manual override, gender badges
-- `src/routes/super.index.tsx` — add "Pending across all admins" tile + link
-- `src/routes/super.settings.tsx` — add "Rebalance assignments" button
-- `src/routes/super.users.tsx` — gender mismatch warning
-- `src/components/app-nav.tsx` — add super-admin contributions nav item
-- `src/i18n/locales/{en,am,om}.ts` — strings: `noSameGenderAdmin`, `genderMismatch`, `rebalance`, `rebalanced`, `superContributions`, `reassignAdmin`, `crossGenderBlocked`
-
-**You (Firebase Console)**
-
-- Publish the updated Firestore rules above
-
-## 6. Open questions before I implement
-
-1. **What should happen to a student who registers and there is no same-gender admin yet?** Recommended: save `assignedAdminId: null`, show the student a "pending admin assignment" notice on `/app`, and surface them to super-admin in a "Needs assignment" list. Confirm or pick a different fallback.
-2. **Cross-gender override for super-admin?** Currently I'll block the manual cross-gender select. If you ever want to allow it (e.g., temporary coverage), say so and I'll add a confirmation dialog instead of an outright block.
-3. **Super-admin acting as approver — should the contribution still show `approvedBy: superAdminUid` or should it also blank `adminId` to reassign accountability?** Recommended: keep original `adminId`, set `approvedBy` to super-admin's uid so the audit trail is honest.  
-  
-ANSWERS  
-1. DO THE RECOMMENDED ONE!  
-2. **Cross-gender override for super-admin IS IMPORTANT**  
-3.  DO THE RECOMMENDED ONE!
+## Out of scope
+No data, auth, Firebase rules, or business-logic changes. Pure responsive UI.
