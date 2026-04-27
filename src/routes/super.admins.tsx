@@ -177,7 +177,7 @@ function SuperAdmins() {
       <section className="space-y-3">
         <h2 className="font-semibold">{t("common.student")} → {t("superAdmin.promoteToAdmin")}</h2>
         <Card className="shadow-soft">
-          <CardContent className="p-0">
+          <CardContent className="p-0 overflow-x-auto">
             <table className="w-full text-sm">
               <tbody>
                 {students.slice(0, 30).map((u) => {
@@ -186,9 +186,9 @@ function SuperAdmins() {
                   const options = sameGenderAdmins(u);
                   return (
                     <tr key={u.id} className="border-b border-border last:border-0">
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <p className="font-medium">{u.fullName}</p>
+                      <td className="px-3 py-2 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-medium truncate">{u.fullName}</p>
                           <GenderBadge gender={u.gender} />
                           {mismatch && (
                             <span title={t("superAdmin.genderMismatch")}>
@@ -196,9 +196,9 @@ function SuperAdmins() {
                             </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground">{u.email}</p>
+                        <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                       </td>
-                      <td className="px-4 py-3 hidden sm:table-cell text-xs">
+                      <td className="px-3 py-2 hidden sm:table-cell text-xs">
                         <Select
                           value={u.assignedAdminId ?? ""}
                           onValueChange={async (v) => {
@@ -224,7 +224,7 @@ function SuperAdmins() {
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-3 py-2 text-right">
                         <Button size="sm" onClick={() => setRole(u, "admin")}>
                           {t("superAdmin.promoteToAdmin")}
                         </Button>

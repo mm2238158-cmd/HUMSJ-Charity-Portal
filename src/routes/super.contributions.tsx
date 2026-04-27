@@ -223,14 +223,14 @@ function SuperContributions() {
             return (
               <Card key={c.id} className="shadow-soft overflow-hidden">
                 <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="min-w-0 flex-1">
                       <p className="font-semibold truncate">{u?.fullName ?? "…"}</p>
                       <p className="text-xs text-muted-foreground truncate">
                         {c.monthId} · {c.amount} ETB · {a?.fullName ?? "—"}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex flex-wrap items-center gap-1 shrink-0">
                       {c.late && <StatusBadge status="late" />}
                       <StatusBadge status={c.status} />
                     </div>
