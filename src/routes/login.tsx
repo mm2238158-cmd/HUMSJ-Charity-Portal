@@ -3,14 +3,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { IconInput } from "@/components/icon-input";
 import { PasswordInput } from "@/components/password-input";
 import { GoogleButton } from "@/components/google-button";
+import { AuthLayout } from "@/components/auth-layout";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
-import logo from "@/assets/humsj-logo.png";
+import { Loader2, Mail, Lock } from "lucide-react";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -51,60 +50,69 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-soft flex items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md">
-        <div className="flex flex-col items-center mb-8">
-          <img src={logo} alt="HUMSJ" className="h-20 w-20 rounded-2xl shadow-elegant" />
-          <h1 className="mt-4 text-2xl font-bold tracking-tight">{t("app.name")}</h1>
-          <p className="text-sm text-muted-foreground">{t("app.tagline")}</p>
+    <AuthLayout title={t("auth.welcome")} subtitle={t("auth.welcomeSub")}>
+      <form onSubmit={onSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-sm">{t("auth.email")}</Label>
+          <IconInput
+            id="email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder={t("auth.emailPlaceholder")}
+            leadingIcon={Mail}
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
         </div>
-        <Card className="shadow-elegant">
-          <CardContent className="p-6">
-            <h2 className="text-xl font-semibold">{t("auth.welcome")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{t("auth.welcomeSub")}</p>
-            <form onSubmit={onSubmit} className="mt-6 space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">{t("auth.email")}</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  required
-                  autoComplete="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">{t("auth.password")}</Label>
-                <PasswordInput
-                  id="password"
-                  required
-                  autoComplete="current-password"
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full" disabled={busy}>
-                {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("auth.signIn")}
-              </Button>
-            </form>
-            <div className="my-4 flex items-center gap-3 text-xs text-muted-foreground">
-              <div className="h-px flex-1 bg-border" />
-              {t("auth.or")}
-              <div className="h-px flex-1 bg-border" />
-            </div>
-            <GoogleButton onClick={onGoogle} loading={busy} label={t("auth.google")} />
-            <p className="mt-6 text-center text-sm text-muted-foreground">
-              {t("auth.noAccount")}{" "}
-              <Link to="/register" className="font-medium text-primary hover:underline">
-                {t("auth.signUp")}
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm">{t("auth.password")}</Label>
+            <button
+              type="button"
+              className="text-xs font-medium text-primary hover:underline"
+              onClick={() => toast.info(t("auth.forgotPassword"))}
+            >
+              {t("auth.forgotPassword")}
+            </button>
+          </div>
+          <PasswordInput
+            id="password"
+            required
+            autoComplete="current-password"
+            minLength={6}
+            placeholder="••••••••"
+            leadingIcon={Lock}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <Button
+          type="submit"
+          disabled={busy}
+          className="w-full h-11 rounded-lg bg-[image:var(--gradient-primary)] text-primary-foreground shadow-elegant hover:opacity-95 transition-opacity"
+        >
+          {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {busy ? t("auth.signingIn") : t("auth.signIn")}
+        </Button>
+      </form>
+
+      <div className="my-5 flex items-center gap-3">
+        <div className="h-px flex-1 bg-border" />
+        <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t("auth.or")}
+        </span>
+        <div className="h-px flex-1 bg-border" />
       </div>
-    </div>
+
+      <GoogleButton onClick={onGoogle} loading={busy} label={t("auth.google")} />
+
+      <p className="mt-6 text-center text-sm text-muted-foreground">
+        {t("auth.noAccount")}{" "}
+        <Link to="/register" className="font-semibold text-primary hover:underline">
+          {t("auth.signUp")}
+        </Link>
+      </p>
+    </AuthLayout>
   );
 }
