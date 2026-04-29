@@ -1,48 +1,113 @@
-# Mobile UI Fixes — Bottom Nav, Super Users Table, and Responsive Polish
+## Goal
 
-## What's broken (and why)
+Make `/login` and `/register` feel polished, trustworthy, and on-brand — closer to what users expect from a modern fintech/charity SaaS — while keeping all existing logic (Firebase auth, gender, Ethiopian phone validation, email verification flow) untouched.
 
-### 1. Bottom tab bar wraps to two rows on mobile (super-admin)
-`src/components/app-nav.tsx` hardcodes `grid-cols-4` in `BottomNav`, but the super-admin role exposes **5** items (Dashboard, Approvals, Users, Admins, Settings). With only 4 columns, the 5th item drops to a second row.
+## What's wrong today
 
-### 2. `/super/users` Action column overflows on mobile
-The page renders a single `<table>` with 6 columns (Name, Email, Gender, Role, Status, Actions). At 390px the row exceeds the viewport — the Action button gets pushed off-screen or clipped. The `<table>` wrapper does scroll horizontally but the Action button is then unreachable without scrolling, which is what the user is seeing.
+- Single narrow card centered on a flat soft gradient — looks like a bare template.
+- No visual identity beyond the small logo; no brand panel, no imagery, no value props.
+- Inputs are short (`h-9`), labels are plain, fields have no icons → form feels cramped.
+- Register page squeezes phone + gender into a tight 2-col grid with a `Select` that looks misaligned next to the input.
+- No password strength indicator, no show/hide affordance polish, no inline field validation.
+- "or" divider, Google button, footer links all look default-shadcn — not branded.
+- Mobile (647px viewport observed): card edges hug screen, no breathing room, headings small.
 
-### 3. Other responsive issues found while auditing
-- `/super` dashboard tiles use `grid-cols-2` with 5 tiles → last tile is alone on its row at mobile (cosmetic, but ugly). Switch to a smarter layout.
-- `/super/admins` "Promote student" table only shows the assignment Select on `sm:` and up, but the row still uses fixed `px-4 py-3` cells that crowd on 390px. Will tighten paddings.
-- Status badges in `/super/contributions` cards (`late` + status side-by-side) can wrap awkwardly inside the header row on narrow screens. Will allow the badges to wrap onto a second line cleanly.
+## Redesign — visual direction
 
-## Plan
+Two-column **split layout** on `md+`, single-column stacked on mobile:
 
-### Fix A — Bottom nav adapts to item count
-In `src/components/app-nav.tsx`, replace the hardcoded `grid-cols-4` with a dynamic class based on `items.length`:
-- 4 items → `grid-cols-4`
-- 5 items → `grid-cols-5`
-- (future-proof) fallback to `style={{ gridTemplateColumns: \`repeat(${items.length}, minmax(0,1fr))\` }}`
+```text
++-------------------------------+----------------------------+
+| BRAND PANEL (gradient)        | FORM PANEL (card)          |
+|  - Logo + wordmark            |  - Heading + subcopy       |
+|  - Headline ("Contribute...") |  - Inputs w/ leading icons |
+|  - 3 value bullets w/ icons   |  - Password + strength bar |
+|  - Subtle decorative blob     |  - Primary CTA             |
+|  - Language switcher (small)  |  - Divider + Google btn    |
+|                               |  - Footer link             |
++-------------------------------+----------------------------+
+```
 
-Also slightly reduce label font size to `text-[10px]` and icon size on 5-column layout so labels don't truncate at 360-390px.
+Mobile: brand panel collapses to a compact header strip (logo + tagline) above the form card. Form card gets `rounded-2xl`, `shadow-elegant`, more generous padding (`p-7 sm:p-8`).
 
-### Fix B — Mobile-friendly `/super/users`
-Mirror the pattern already used in `/admin/users`:
-- **Mobile (<md):** render a stacked **card list** (avatar/initial + name + email + gender chip + role + status, with the Activate/Deactivate button as a full-width secondary button at the bottom of each card). Mismatch warning shown inline.
-- **Desktop (md+):** keep the existing table.
+Use existing tokens only — `--gradient-primary`, `--primary-glow`, `--shadow-elegant`, `--shadow-soft`. No new colors.
 
-### Fix C — Super dashboard tile grid
-In `src/routes/super.index.tsx`, change `grid-cols-2 lg:grid-cols-5` to `grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`. With 5 tiles this gives 2+2+1 on phones (fine) and a clean row of 5 on desktops.
+## Detailed changes
 
-### Fix D — Super admins page table padding
-In `src/routes/super.admins.tsx`, change `px-4 py-3` cells to `px-3 py-2` and make the "Promote" button `size="sm"` w-auto (already sm). Also change `<table>` to be wrapped in `overflow-x-auto` for safety.
+### 1. New shared component `src/components/auth-layout.tsx`
+- Props: `title`, `subtitle`, `children`, `footer`.
+- Renders the split layout (brand panel left, content right), handles responsive collapse.
+- Brand panel content (driven by i18n):
+  - Logo (h-12) + wordmark
+  - H1: `auth.brandHeadline` ("Contribute. Connect. Care.")
+  - Sub: `auth.brandSubline`
+  - 3 bullets with lucide icons (`HeartHandshake`, `ShieldCheck`, `Users`) + i18n keys.
+  - Decorative gradient blob using `--gradient-primary` + low opacity, positioned absolute.
 
-### Fix E — Contribution card header on mobile
-In `src/routes/super.contributions.tsx` line 226, allow the badge group to wrap: change the header `<div className="flex items-center justify-between gap-2">` to allow wrap (`flex-wrap`) and put the badges in a `flex-wrap gap-1 shrink-0` container.
+### 2. New `src/components/icon-input.tsx`
+- Wrapper around shadcn `Input` that accepts a `leadingIcon` (lucide) and renders it absolutely positioned, with `pl-10`. Forwards ref + all input props. Bumps height to `h-11` for both this and the existing `PasswordInput` for consistency on auth pages.
 
-## Files to edit
-- `src/components/app-nav.tsx` — dynamic columns
-- `src/routes/super.users.tsx` — add mobile card layout
-- `src/routes/super.index.tsx` — tile grid breakpoints
-- `src/routes/super.admins.tsx` — tighter table padding + horizontal scroll wrapper
-- `src/routes/super.contributions.tsx` — badge wrap on narrow screens
+### 3. New `src/components/password-strength.tsx`
+- Tiny 4-segment bar under the password field on register only.
+- Score = length≥6, has lowercase+uppercase, has digit, has symbol.
+- Colors: destructive → warning → primary-glow → success.
+- Label text from i18n: weak / fair / good / strong.
+
+### 4. Rewrite `src/routes/login.tsx`
+- Use `<AuthLayout>`.
+- Email field uses `IconInput` with `Mail` icon.
+- Password uses updated `PasswordInput` (h-11) with `Lock` icon prefix.
+- Add right-aligned `Forgot password?` link above password input (uses existing `auth.forgotPassword`; routes to `/login` with toast for now if route missing — we already have this string, just non-functional disabled link is fine; spec a real route in a follow-up).
+- Primary button: `h-11`, full-width, gradient background via `bg-[image:var(--gradient-primary)] text-primary-foreground shadow-elegant hover:opacity-95`.
+- Divider: thin border with centered `OR` chip.
+- Google button: keep but unify to `h-11` and same radius.
+- Footer: "Don't have an account? Sign up" centered, larger tap target.
+
+### 5. Rewrite `src/routes/register.tsx`
+- Use `<AuthLayout>` with register copy.
+- Field order: Full name → Email → Phone + Gender (still 2-col but with proper alignment, both `h-11`, gender Select trigger restyled to match input height) → Password → Confirm password.
+- Add inline helpers under fields:
+  - Phone: muted text "Format: +2519XXXXXXXX" (already have `auth.phoneFormat`).
+  - Password: `<PasswordStrength />` meter.
+- Add a small consent line under the submit button: "By creating an account you agree to our Terms & Privacy" (i18n `auth.terms`). No link target needed yet — plain muted text.
+- Same gradient primary CTA + Google + footer treatment as login.
+
+### 6. i18n additions (en/am/om)
+Add to `auth` namespace in all three locales:
+- `brandHeadline`, `brandSubline`
+- `valueProp1`, `valueProp2`, `valueProp3`
+- `pwWeak`, `pwFair`, `pwGood`, `pwStrong`
+- `terms`
+- `emailPlaceholder` ("you@example.com"), `namePlaceholder` ("e.g. Abdi Mohammed")
+
+### 7. Microinteractions
+- Inputs: `transition-colors`, focus ring uses `--ring`; on hover border darkens slightly.
+- Card: subtle `motion-safe:animate-in fade-in slide-in-from-bottom-2 duration-300` wrapper.
+- Submit button shows spinner + label change ("Signing in…" / "Creating account…").
 
 ## Out of scope
-No data, auth, Firebase rules, or business-logic changes. Pure responsive UI.
+
+- No changes to `auth-context.tsx`, Firebase rules, validation regex, or routing.
+- No new password reset flow (only the visual link placeholder).
+- No dark-mode-specific overhaul beyond what tokens already give us.
+
+## Files
+
+**Create**
+- `src/components/auth-layout.tsx`
+- `src/components/icon-input.tsx`
+- `src/components/password-strength.tsx`
+
+**Edit**
+- `src/routes/login.tsx` — full rewrite of JSX, same logic.
+- `src/routes/register.tsx` — full rewrite of JSX, same logic.
+- `src/components/password-input.tsx` — bump default height to `h-11`, accept optional leading icon.
+- `src/i18n/locales/en.ts`, `am.ts`, `om.ts` — add new keys.
+
+## Acceptance check (after build)
+
+- `/login` and `/register` show split layout on ≥768px, stacked on mobile.
+- All inputs are `h-11`, gender select aligns with phone input.
+- Password strength bar updates as user types on register.
+- Submit, Google, and footer links work exactly as before.
+- No TS or i18n key-missing warnings; responsive at 360 / 647 / 1024 / 1440.
