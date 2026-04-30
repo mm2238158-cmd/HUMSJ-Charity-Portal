@@ -115,6 +115,7 @@ function LoginPage() {
           {t("auth.signUp")}
         </Link>
       </p>
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} initialEmail={email} />
     </AuthLayout>
   );
 }
