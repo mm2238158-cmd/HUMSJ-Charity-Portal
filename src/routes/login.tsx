@@ -8,6 +8,7 @@ import { IconInput } from "@/components/icon-input";
 import { PasswordInput } from "@/components/password-input";
 import { GoogleButton } from "@/components/google-button";
 import { AuthLayout } from "@/components/auth-layout";
+import { ForgotPasswordDialog } from "@/components/forgot-password-dialog";
 import { toast } from "sonner";
 import { Loader2, Mail, Lock } from "lucide-react";
 
@@ -22,6 +23,7 @@ function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +73,7 @@ function LoginPage() {
             <button
               type="button"
               className="text-xs font-medium text-primary hover:underline"
-              onClick={() => toast.info(t("auth.forgotPassword"))}
+              onClick={() => setForgotOpen(true)}
             >
               {t("auth.forgotPassword")}
             </button>
@@ -113,6 +115,7 @@ function LoginPage() {
           {t("auth.signUp")}
         </Link>
       </p>
+      <ForgotPasswordDialog open={forgotOpen} onOpenChange={setForgotOpen} initialEmail={email} />
     </AuthLayout>
   );
 }

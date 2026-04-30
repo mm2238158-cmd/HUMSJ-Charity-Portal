@@ -1,113 +1,60 @@
-## Goal
+## 1. Firestore Indexes — clarification (no code change needed now)
 
-Make `/login` and `/register` feel polished, trustworthy, and on-brand — closer to what users expect from a modern fintech/charity SaaS — while keeping all existing logic (Firebase auth, gender, Ethiopian phone validation, email verification flow) untouched.
+You're right that we're in MVP. Here's the honest state:
 
-## What's wrong today
+- Firestore **auto-creates single-field indexes** for every field. All our current queries that filter on a single field (e.g. `where("userId","==",...)`, `where("isActive","==",true)`, `where("assignedAdminId","==",adminId)`) work out of the box with **zero index configuration**.
+- A **composite index** is only required when a query combines **multiple `where` filters on different fields**, OR mixes `where` with `orderBy` on a different field. Today we have a few of those:
+  - `users` where `role == admin` AND `gender == X` (assignment)
+  - `users` where `role == student` AND `gender == X` (load balance)
+  - `notifications` where `userId == X` AND `isRead == false`
+  - `approvals` where `adminId == X` AND `status == pending`
 
-- Single narrow card centered on a flat soft gradient — looks like a bare template.
-- No visual identity beyond the small logo; no brand panel, no imagery, no value props.
-- Inputs are short (`h-9`), labels are plain, fields have no icons → form feels cramped.
-- Register page squeezes phone + gender into a tight 2-col grid with a `Select` that looks misaligned next to the input.
-- No password strength indicator, no show/hide affordance polish, no inline field validation.
-- "or" divider, Google button, footer links all look default-shadcn — not branded.
-- Mobile (647px viewport observed): card edges hug screen, no breathing room, headings small.
+Firestore handles these gracefully: the **first time** such a query runs in production, the SDK throws a `failed-precondition` error containing a **direct link** to auto-create the needed composite index — one click in the Firebase console. For an MVP with a tiny dataset this is fine; the queries also often succeed without a composite index when result sets are small.
 
-## Redesign — visual direction
+**Plan for indexes:**
+- **MVP (now):** do nothing. If/when a query throws the index error, click the link Firebase gives us. No code work required.
+- **Next phase (pre-launch hardening):** add a `firestore.indexes.json` file checked into the repo and deploy via Firebase CLI so indexes are reproducible across environments. Not needed yet.
 
-Two-column **split layout** on `md+`, single-column stacked on mobile:
+So: **we're not "ignoring" indexes — Firestore is doing the right thing automatically for MVP scale.**
 
-```text
-+-------------------------------+----------------------------+
-| BRAND PANEL (gradient)        | FORM PANEL (card)          |
-|  - Logo + wordmark            |  - Heading + subcopy       |
-|  - Headline ("Contribute...") |  - Inputs w/ leading icons |
-|  - 3 value bullets w/ icons   |  - Password + strength bar |
-|  - Subtle decorative blob     |  - Primary CTA             |
-|  - Language switcher (small)  |  - Divider + Google btn    |
-|                               |  - Footer link             |
-+-------------------------------+----------------------------+
+## 2. Fix Forgot Password (currently just shows a toast)
+
+### What's broken
+`src/routes/login.tsx` has:
+```ts
+onClick={() => toast.info(t("auth.forgotPassword"))}
 ```
+That just toasts the label — no email is sent.
 
-Mobile: brand panel collapses to a compact header strip (logo + tagline) above the form card. Form card gets `rounded-2xl`, `shadow-elegant`, more generous padding (`p-7 sm:p-8`).
+### Fix — minimal, MVP-appropriate
 
-Use existing tokens only — `--gradient-primary`, `--primary-glow`, `--shadow-elegant`, `--shadow-soft`. No new colors.
+**a) `src/lib/auth-context.tsx`**
+- Import `sendPasswordResetEmail` from `firebase/auth`.
+- Add `resetPassword(email: string): Promise<void>` to the `AuthCtx` interface and the context `value`. It calls `sendPasswordResetEmail(auth, email.trim().toLowerCase(), { url: window.location.origin + "/login" })` and wraps errors with `friendlyAuthError`.
+- Extend `friendlyAuthError` map with `auth/missing-email` → "Please enter your email address first."
 
-## Detailed changes
+**b) `src/components/forgot-password-dialog.tsx` (new)**
+- Small shadcn `Dialog` containing one `IconInput` (email, `Mail` icon) + submit button.
+- On submit calls `resetPassword(email)`, shows `toast.success(t("auth.resetSent"))`, closes dialog. Pre-fills with the email already typed on the login form (passed via prop).
+- Loading state with `Loader2` while sending.
 
-### 1. New shared component `src/components/auth-layout.tsx`
-- Props: `title`, `subtitle`, `children`, `footer`.
-- Renders the split layout (brand panel left, content right), handles responsive collapse.
-- Brand panel content (driven by i18n):
-  - Logo (h-12) + wordmark
-  - H1: `auth.brandHeadline` ("Contribute. Connect. Care.")
-  - Sub: `auth.brandSubline`
-  - 3 bullets with lucide icons (`HeartHandshake`, `ShieldCheck`, `Users`) + i18n keys.
-  - Decorative gradient blob using `--gradient-primary` + low opacity, positioned absolute.
+**c) `src/routes/login.tsx`**
+- Replace the `toast.info(...)` button with one that opens the dialog (`useState` for open).
+- Pass current `email` as the initial value so users don't retype.
 
-### 2. New `src/components/icon-input.tsx`
-- Wrapper around shadcn `Input` that accepts a `leadingIcon` (lucide) and renders it absolutely positioned, with `pl-10`. Forwards ref + all input props. Bumps height to `h-11` for both this and the existing `PasswordInput` for consistency on auth pages.
+**d) i18n keys (en / am / om)** — add:
+- `auth.forgotPasswordTitle` — "Reset your password"
+- `auth.forgotPasswordSub` — "Enter your account email and we'll send you a reset link."
+- `auth.sendResetLink` — "Send reset link"
+- `auth.resetSent` — "Reset link sent. Check your email."
+- `auth.cancel` — "Cancel"
 
-### 3. New `src/components/password-strength.tsx`
-- Tiny 4-segment bar under the password field on register only.
-- Score = length≥6, has lowercase+uppercase, has digit, has symbol.
-- Colors: destructive → warning → primary-glow → success.
-- Label text from i18n: weak / fair / good / strong.
+### Files touched
+- edit `src/lib/auth-context.tsx`
+- edit `src/routes/login.tsx`
+- create `src/components/forgot-password-dialog.tsx`
+- edit `src/i18n/locales/en.ts`, `am.ts`, `om.ts`
 
-### 4. Rewrite `src/routes/login.tsx`
-- Use `<AuthLayout>`.
-- Email field uses `IconInput` with `Mail` icon.
-- Password uses updated `PasswordInput` (h-11) with `Lock` icon prefix.
-- Add right-aligned `Forgot password?` link above password input (uses existing `auth.forgotPassword`; routes to `/login` with toast for now if route missing — we already have this string, just non-functional disabled link is fine; spec a real route in a follow-up).
-- Primary button: `h-11`, full-width, gradient background via `bg-[image:var(--gradient-primary)] text-primary-foreground shadow-elegant hover:opacity-95`.
-- Divider: thin border with centered `OR` chip.
-- Google button: keep but unify to `h-11` and same radius.
-- Footer: "Don't have an account? Sign up" centered, larger tap target.
-
-### 5. Rewrite `src/routes/register.tsx`
-- Use `<AuthLayout>` with register copy.
-- Field order: Full name → Email → Phone + Gender (still 2-col but with proper alignment, both `h-11`, gender Select trigger restyled to match input height) → Password → Confirm password.
-- Add inline helpers under fields:
-  - Phone: muted text "Format: +2519XXXXXXXX" (already have `auth.phoneFormat`).
-  - Password: `<PasswordStrength />` meter.
-- Add a small consent line under the submit button: "By creating an account you agree to our Terms & Privacy" (i18n `auth.terms`). No link target needed yet — plain muted text.
-- Same gradient primary CTA + Google + footer treatment as login.
-
-### 6. i18n additions (en/am/om)
-Add to `auth` namespace in all three locales:
-- `brandHeadline`, `brandSubline`
-- `valueProp1`, `valueProp2`, `valueProp3`
-- `pwWeak`, `pwFair`, `pwGood`, `pwStrong`
-- `terms`
-- `emailPlaceholder` ("you@example.com"), `namePlaceholder` ("e.g. Abdi Mohammed")
-
-### 7. Microinteractions
-- Inputs: `transition-colors`, focus ring uses `--ring`; on hover border darkens slightly.
-- Card: subtle `motion-safe:animate-in fade-in slide-in-from-bottom-2 duration-300` wrapper.
-- Submit button shows spinner + label change ("Signing in…" / "Creating account…").
-
-## Out of scope
-
-- No changes to `auth-context.tsx`, Firebase rules, validation regex, or routing.
-- No new password reset flow (only the visual link placeholder).
-- No dark-mode-specific overhaul beyond what tokens already give us.
-
-## Files
-
-**Create**
-- `src/components/auth-layout.tsx`
-- `src/components/icon-input.tsx`
-- `src/components/password-strength.tsx`
-
-**Edit**
-- `src/routes/login.tsx` — full rewrite of JSX, same logic.
-- `src/routes/register.tsx` — full rewrite of JSX, same logic.
-- `src/components/password-input.tsx` — bump default height to `h-11`, accept optional leading icon.
-- `src/i18n/locales/en.ts`, `am.ts`, `om.ts` — add new keys.
-
-## Acceptance check (after build)
-
-- `/login` and `/register` show split layout on ≥768px, stacked on mobile.
-- All inputs are `h-11`, gender select aligns with phone input.
-- Password strength bar updates as user types on register.
-- Submit, Google, and footer links work exactly as before.
-- No TS or i18n key-missing warnings; responsive at 360 / 647 / 1024 / 1440.
+### Notes
+- Firebase handles the entire reset flow (hosted page) — no `/reset-password` route needed on our side. The `url` we pass is just where the user lands **after** they reset, so we send them back to `/login`.
+- Make sure the deployed domain is listed in **Firebase Auth → Settings → Authorized domains** (already required for sign-in, so this is usually already set).
