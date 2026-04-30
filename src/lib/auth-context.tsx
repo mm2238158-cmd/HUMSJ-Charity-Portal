@@ -15,6 +15,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendEmailVerification,
+  sendPasswordResetEmail,
   deleteUser,
   type User as FirebaseUser,
 } from "firebase/auth";
@@ -51,6 +52,7 @@ interface AuthCtx {
   signIn: (email: string, password: string) => Promise<void>;
   signInGoogle: () => Promise<void>;
   signUp: (d: SignUpData) => Promise<SignUpResult>;
+  resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -77,6 +79,7 @@ export function friendlyAuthError(err: unknown): Error {
       "Verification link domain isn't authorized in Firebase. Add this domain under Authentication → Settings → Authorized domains.",
     "auth/operation-not-allowed":
       "Google sign-in is disabled in your Firebase project. Enable it in Authentication → Sign-in method.",
+    "auth/missing-email": "Please enter your email address first.",
   };
   return new Error(map[code] ?? e?.message ?? "Something went wrong");
 }
