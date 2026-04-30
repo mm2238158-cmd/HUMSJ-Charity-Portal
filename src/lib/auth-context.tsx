@@ -271,6 +271,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           };
         }
       },
+      resetPassword: async (email: string) => {
+        const clean = (email ?? "").trim().toLowerCase();
+        if (!clean) {
+          throw new Error("Please enter your email address first.");
+        }
+        try {
+          await sendPasswordResetEmail(auth, clean, {
+            url: window.location.origin + "/login",
+            handleCodeInApp: false,
+          });
+        } catch (err) {
+          throw friendlyAuthError(err);
+        }
+      },
       signOut: async () => {
         await fbSignOut(auth);
       },
