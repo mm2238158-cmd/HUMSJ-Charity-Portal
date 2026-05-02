@@ -282,6 +282,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             handleCodeInApp: false,
           });
         } catch (err) {
+          const e = err as { code?: string };
+          // Anti-enumeration: silently succeed when no account exists.
+          // Firebase only actually delivers mail to real accounts.
+          if (e?.code === "auth/user-not-found") return;
           throw friendlyAuthError(err);
         }
       },
