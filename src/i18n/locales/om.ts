@@ -39,6 +39,7 @@ const om: Translations = {
     forgotPasswordSub: "Imeelii herrega keetii galchi; liinkii haaromsaa siif ergina.",
     sendResetLink: "Liinkii haaromsaa ergi",
     resetSent: "Liinkiin haaromsaa ergameera. Imeelii kee ilaali.",
+    resetSentGeneric: "Yoo herregni imeelii kanaaf jiraate, liinkii haaromsaa siif ergineerra. Imeelii kee (akkasumas spam) ilaali.",
     cancel: "Dhiisi",
     invalidEmail: "Imeelii sirrii galchi",
     passwordShort: "Yoo xiqqaate qubee 6 ta'uu qaba",
