@@ -39,6 +39,7 @@ const am: Translations = {
     forgotPasswordSub: "የመለያዎን ኢሜይል ያስገቡ፣ ዳግም የማስተካከያ አገናኝ እንልክልዎታለን።",
     sendResetLink: "የማስተካከያ አገናኝ ላክ",
     resetSent: "የማስተካከያ አገናኝ ተልኳል። ኢሜይልዎን ይመልከቱ።",
+    resetSentGeneric: "ለዚህ ኢሜይል መለያ ካለ፣ የማስተካከያ አገናኝ ልከንልዎታል። ኢሜይልዎን (እና አይፈለጌ መልዕክት ማውጫን) ይመልከቱ።",
     cancel: "ይቅር",
     invalidEmail: "ትክክለኛ ኢሜይል አስገባ",
     passwordShort: "ቢያንስ 6 ቁምፊዎች መሆን አለበት",
