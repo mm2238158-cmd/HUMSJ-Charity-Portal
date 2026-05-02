@@ -40,23 +40,31 @@ export async function ensureCurrentMonth(deadlineDay: DeadlineDay = 28, locale =
 
   if (exists && activeOthers.length === 0) return; // already correct
 
-  await runTransaction(db, async (tx) => {
-    const ref = doc(db, "months", id);
-    const snap = await tx.get(ref);
-    if (!snap.exists()) {
-      tx.set(ref, {
-        name,
-        startDate: Timestamp.fromDate(start),
-        dueDate: Timestamp.fromDate(due),
-        isActive: true,
-      });
-    } else if (!snap.data().isActive) {
-      tx.update(ref, { isActive: true });
-    }
-    for (const other of activeOthers) {
-      tx.update(doc(db, "months", other.id), { isActive: false });
-    }
-  });
+  try {
+    await runTransaction(db, async (tx) => {
+      const ref = doc(db, "months", id);
+      const snap = await tx.get(ref);
+      if (!snap.exists()) {
+        tx.set(ref, {
+          name,
+          startDate: Timestamp.fromDate(start),
+          dueDate: Timestamp.fromDate(due),
+          isActive: true,
+        });
+      } else if (!snap.data().isActive) {
+        tx.update(ref, { isActive: true });
+      }
+      for (const other of activeOthers) {
+        tx.update(doc(db, "months", other.id), { isActive: false });
+      }
+    });
+  } catch (err) {
+    const code = (err as { code?: string })?.code;
+    // Students (and any non-writer) will hit permission-denied — that's fine,
+    // the cron job or an admin opening the app will perform the actual write.
+    if (code === "permission-denied") return;
+    throw err;
+  }
 }
 
 export function isPastDeadline(dueDateMs: number | undefined | null, now: Date = new Date()): boolean {
