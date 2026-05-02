@@ -1,60 +1,60 @@
-## 1. Firestore Indexes — clarification (no code change needed now)
+## Forgot Password — secure (anti-enumeration) behavior
 
-You're right that we're in MVP. Here's the honest state:
+Adopt industry-standard behavior: always show a generic success message, regardless of whether the email exists. Firebase only actually sends mail to real accounts, so legitimate users still get the link, and attackers can't probe which emails are registered.
 
-- Firestore **auto-creates single-field indexes** for every field. All our current queries that filter on a single field (e.g. `where("userId","==",...)`, `where("isActive","==",true)`, `where("assignedAdminId","==",adminId)`) work out of the box with **zero index configuration**.
-- A **composite index** is only required when a query combines **multiple `where` filters on different fields**, OR mixes `where` with `orderBy` on a different field. Today we have a few of those:
-  - `users` where `role == admin` AND `gender == X` (assignment)
-  - `users` where `role == student` AND `gender == X` (load balance)
-  - `notifications` where `userId == X` AND `isRead == false`
-  - `approvals` where `adminId == X` AND `status == pending`
+### Changes
 
-Firestore handles these gracefully: the **first time** such a query runs in production, the SDK throws a `failed-precondition` error containing a **direct link** to auto-create the needed composite index — one click in the Firebase console. For an MVP with a tiny dataset this is fine; the queries also often succeed without a composite index when result sets are small.
-
-**Plan for indexes:**
-- **MVP (now):** do nothing. If/when a query throws the index error, click the link Firebase gives us. No code work required.
-- **Next phase (pre-launch hardening):** add a `firestore.indexes.json` file checked into the repo and deploy via Firebase CLI so indexes are reproducible across environments. Not needed yet.
-
-So: **we're not "ignoring" indexes — Firestore is doing the right thing automatically for MVP scale.**
-
-## 2. Fix Forgot Password (currently just shows a toast)
-
-### What's broken
-`src/routes/login.tsx` has:
+**`src/lib/forgot-password-schema.ts` (new)**
+Tiny zod schema for strict format validation:
 ```ts
-onClick={() => toast.info(t("auth.forgotPassword"))}
+import { z } from "zod";
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address")
+    .max(255, "Email is too long"),
+});
 ```
-That just toasts the label — no email is sent.
 
-### Fix — minimal, MVP-appropriate
+**`src/lib/auth-context.tsx`**
+Update the `resetPassword` handler to swallow `auth/user-not-found` silently:
+```ts
+resetPassword: async (email: string) => {
+  const clean = (email ?? "").trim().toLowerCase();
+  if (!clean) throw new Error("Please enter your email address first.");
+  try {
+    await sendPasswordResetEmail(auth, clean, {
+      url: window.location.origin + "/login",
+      handleCodeInApp: false,
+    });
+  } catch (err) {
+    const e = err as { code?: string };
+    // Anti-enumeration: pretend success when the account doesn't exist.
+    // Firebase only actually delivers mail to real accounts.
+    if (e?.code === "auth/user-not-found") return;
+    throw friendlyAuthError(err);  // still surface invalid-email, network, rate-limit
+  }
+},
+```
 
-**a) `src/lib/auth-context.tsx`**
-- Import `sendPasswordResetEmail` from `firebase/auth`.
-- Add `resetPassword(email: string): Promise<void>` to the `AuthCtx` interface and the context `value`. It calls `sendPasswordResetEmail(auth, email.trim().toLowerCase(), { url: window.location.origin + "/login" })` and wraps errors with `friendlyAuthError`.
-- Extend `friendlyAuthError` map with `auth/missing-email` → "Please enter your email address first."
+**`src/components/forgot-password-dialog.tsx`**
+- Validate input with `forgotPasswordSchema.safeParse(...)` before calling `resetPassword`. On format failure, show the zod error inline (not a toast).
+- On success (including the silent "user not found" case), show the **generic** message: `t("auth.resetSentGeneric")` — *"If an account exists for that email, we've sent a reset link. Check your inbox (and spam folder)."*
+- Keep loading state and Cancel button as is.
 
-**b) `src/components/forgot-password-dialog.tsx` (new)**
-- Small shadcn `Dialog` containing one `IconInput` (email, `Mail` icon) + submit button.
-- On submit calls `resetPassword(email)`, shows `toast.success(t("auth.resetSent"))`, closes dialog. Pre-fills with the email already typed on the login form (passed via prop).
-- Loading state with `Loader2` while sending.
+**i18n (en / am / om)** — add one key, replace one:
+- replace `auth.resetSent` → `auth.resetSentGeneric`:
+  - en: `"If an account exists for that email, we've sent a reset link. Check your inbox (and spam folder)."`
+  - am: `"ለዚህ ኢሜይል መለያ ካለ፣ የማስተካከያ አገናኝ ልከንልዎታል። ኢሜይልዎን (እና አይፈለጌ መልዕክት ማውጫን) ይመልከቱ።"`
+  - om: `"Yoo herregni imeelii kanaaf jiraate, liinkii haaromsaa siif ergineerra. Imeelii kee (akkasumas spam) ilaali."`
 
-**c) `src/routes/login.tsx`**
-- Replace the `toast.info(...)` button with one that opens the dialog (`useState` for open).
-- Pass current `email` as the initial value so users don't retype.
+### Why this is the right call
+- Prevents an attacker from enumerating registered female members (a real risk for a gender-segregated community app).
+- Matches behavior of Google, GitHub, Stripe, etc. — users are accustomed to it.
+- Honest typos in the email **format** still get a clear error (zod), so usability for the common mistake is preserved.
 
-**d) i18n keys (en / am / om)** — add:
-- `auth.forgotPasswordTitle` — "Reset your password"
-- `auth.forgotPasswordSub` — "Enter your account email and we'll send you a reset link."
-- `auth.sendResetLink` — "Send reset link"
-- `auth.resetSent` — "Reset link sent. Check your email."
-- `auth.cancel` — "Cancel"
-
-### Files touched
+### Files
+- create `src/lib/forgot-password-schema.ts`
 - edit `src/lib/auth-context.tsx`
-- edit `src/routes/login.tsx`
-- create `src/components/forgot-password-dialog.tsx`
+- edit `src/components/forgot-password-dialog.tsx`
 - edit `src/i18n/locales/en.ts`, `am.ts`, `om.ts`
-
-### Notes
-- Firebase handles the entire reset flow (hosted page) — no `/reset-password` route needed on our side. The `url` we pass is just where the user lands **after** they reset, so we send them back to `/login`.
-- Make sure the deployed domain is listed in **Firebase Auth → Settings → Authorized domains** (already required for sign-in, so this is usually already set).

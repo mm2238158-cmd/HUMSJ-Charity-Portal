@@ -37,6 +37,7 @@ const en = {
     forgotPasswordSub: "Enter your account email and we'll send you a reset link.",
     sendResetLink: "Send reset link",
     resetSent: "Reset link sent. Check your email.",
+    resetSentGeneric: "If an account exists for that email, we've sent a reset link. Check your inbox (and spam folder).",
     cancel: "Cancel",
     invalidEmail: "Enter a valid email",
     passwordShort: "Password must be at least 6 characters",
