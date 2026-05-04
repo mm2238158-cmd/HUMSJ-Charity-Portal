@@ -31,7 +31,6 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminApprovalsRouteImport } from './routes/admin.approvals'
-import { Route as ApiPublicCronRolloverMonthRouteImport } from './routes/api/public/cron/rollover-month'
 
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
@@ -143,12 +142,6 @@ const AdminApprovalsRoute = AdminApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AdminRoute,
 } as any)
-const ApiPublicCronRolloverMonthRoute =
-  ApiPublicCronRolloverMonthRouteImport.update({
-    id: '/api/public/cron/rollover-month',
-    path: '/api/public/cron/rollover-month',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -173,7 +166,6 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/super/': typeof SuperIndexRoute
-  '/api/public/cron/rollover-month': typeof ApiPublicCronRolloverMonthRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -195,7 +187,6 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/app': typeof AppIndexRoute
   '/super': typeof SuperIndexRoute
-  '/api/public/cron/rollover-month': typeof ApiPublicCronRolloverMonthRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -221,7 +212,6 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/app/': typeof AppIndexRoute
   '/super/': typeof SuperIndexRoute
-  '/api/public/cron/rollover-month': typeof ApiPublicCronRolloverMonthRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -248,7 +238,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/super/'
-    | '/api/public/cron/rollover-month'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -270,7 +259,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/app'
     | '/super'
-    | '/api/public/cron/rollover-month'
   id:
     | '__root__'
     | '/'
@@ -295,7 +283,6 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/app/'
     | '/super/'
-    | '/api/public/cron/rollover-month'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -305,7 +292,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   SuperRoute: typeof SuperRouteWithChildren
-  ApiPublicCronRolloverMonthRoute: typeof ApiPublicCronRolloverMonthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -464,13 +450,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApprovalsRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/api/public/cron/rollover-month': {
-      id: '/api/public/cron/rollover-month'
-      path: '/api/public/cron/rollover-month'
-      fullPath: '/api/public/cron/rollover-month'
-      preLoaderRoute: typeof ApiPublicCronRolloverMonthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -537,7 +516,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   SuperRoute: SuperRouteWithChildren,
-  ApiPublicCronRolloverMonthRoute: ApiPublicCronRolloverMonthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

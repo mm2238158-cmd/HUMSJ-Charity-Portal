@@ -158,13 +158,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsub;
   }, [user]);
 
-  // Safety-net: any logged-in user triggers a rollover check on session start.
-  // The primary trigger is the server cron (POST /api/public/cron/rollover-month).
-  // Students/admins without write permission silently no-op (months.ts swallows
-  // permission-denied), so only super-admins (and admins, if rules allow) actually
-  // create the doc — but the check runs widely so cron failures are auto-recovered.
+  // Auto-create the current calendar month when a super-admin signs in.
+  // Safe no-op if the month already exists & is active.
   useEffect(() => {
-    if (!profile) return;
+    if (!profile || profile.role !== "super-admin") return;
     let cancelled = false;
     (async () => {
       try {
