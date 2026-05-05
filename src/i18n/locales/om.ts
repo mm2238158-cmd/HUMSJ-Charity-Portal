@@ -26,6 +26,8 @@ const om: Translations = {
     gender: "Saala",
     male: "Dhiira",
     female: "Dubartii",
+    selectGender: "Saala filadhu",
+    genderRequired: "Maaloo saala kee filadhu",
     haveAccount: "Herrega qabdaa?",
     noAccount: "Herrega hin qabdu?",
     welcome: "Baga Nagaan Dhufte",
