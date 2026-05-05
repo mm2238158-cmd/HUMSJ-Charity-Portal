@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAllUsers, useAllContributions, useActiveMonth } from "@/lib/data-hooks";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTranslation } from "react-i18next";
-import { Users, Wallet, Activity, Shield, Clock } from "lucide-react";
+import { Users, Wallet, Activity, Shield, Clock, TrendingUp, CheckCircle2, XCircle, CalendarDays } from "lucide-react";
 import { useMemo } from "react";
 
 export const Route = createFileRoute("/super/")({
