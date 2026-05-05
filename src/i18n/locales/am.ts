@@ -94,6 +94,8 @@ const am: Translations = {
     submit: "መዋጮ አስገባ",
     history: "የመዋጮ ታሪክ",
     noHistory: "ምንም መዋጮ የለም",
+    recentMonths: "የቅርብ ወራት",
+    olderHistory: "የቆዩ ታሪክ",
     alreadyPaid: "ለዚህ ወር አስገብተሃል",
     rejectionReason: "የመቃወሚያ ምክንያት",
     deadline: "የመጨረሻ ቀን",
