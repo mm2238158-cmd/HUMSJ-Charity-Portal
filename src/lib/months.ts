@@ -63,3 +63,29 @@ export function isPastDeadline(dueDateMs: number | undefined | null, now: Date =
   if (!dueDateMs) return false;
   return now.getTime() > dueDateMs;
 }
+
+/**
+ * Calls ensureCurrentMonth and silently swallows permission-denied errors,
+ * so it can be invoked from any signed-in client (students/admins) without
+ * crashing when Firestore rules forbid writes.
+ */
+export async function safeEnsureCurrentMonth(
+  deadlineDay: DeadlineDay = 28,
+  locale = "en-US",
+): Promise<void> {
+  try {
+    await ensureCurrentMonth(deadlineDay, locale);
+  } catch (err) {
+    const code = (err as { code?: string })?.code ?? "";
+    if (code === "permission-denied" || code === "permission_denied") return;
+    // Other errors (network, etc.) are non-fatal here too — log and move on.
+    console.warn("safeEnsureCurrentMonth:", err);
+  }
+}
+
+/**
+ * Splits a desc-sorted month list into the latest 4 ("recent") and the rest ("history").
+ */
+export function splitMonths<T>(months: T[]): { recent: T[]; history: T[] } {
+  return { recent: months.slice(0, 4), history: months.slice(4) };
+}
