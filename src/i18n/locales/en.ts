@@ -115,6 +115,12 @@ const en = {
   superAdmin: {
     totalUsers: "Total users",
     totalContributions: "Total contributions",
+    contributedThisMonth: "Contributed this month",
+    totalContributedAllTime: "Total contributed (all time)",
+    approvedThisMonth: "Approved this month",
+    rejectedThisMonth: "Rejected this month",
+    participationRate: "Participation rate",
+    avgPerStudent: "Average per student",
     systemHealth: "System health",
     roleBreakdown: "Role breakdown",
     adminManagement: "Admin management",
