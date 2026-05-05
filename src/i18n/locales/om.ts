@@ -94,6 +94,8 @@ const om: Translations = {
     submit: "Galchi",
     history: "Seenaa Buusii",
     noHistory: "Buusii hin jiru",
+    recentMonths: "Ji'oota dhihoo",
+    olderHistory: "Seenaa duraa",
     alreadyPaid: "Ji'a kanaaf galchitee jirta",
     rejectionReason: "Sababii diddamuu",
     deadline: "Guyyaa xumuraa",

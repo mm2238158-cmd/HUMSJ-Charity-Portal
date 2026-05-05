@@ -92,6 +92,8 @@ const en = {
     submit: "Submit contribution",
     history: "Contribution history",
     noHistory: "No contributions yet",
+    recentMonths: "Recent months",
+    olderHistory: "Older history",
     alreadyPaid: "You have already submitted for this month",
     rejectionReason: "Rejection reason",
     deadline: "Deadline",
