@@ -60,6 +60,17 @@ export function useMonths() {
   return { months, loading };
 }
 
+/**
+ * Convenience hook: returns months split into latest 4 (recent) and the rest (history),
+ * plus the full sorted list. Sorted descending by startDate.
+ */
+export function useRecentAndHistoryMonths() {
+  const { months, loading } = useMonths();
+  const recent = months.slice(0, 4);
+  const history = months.slice(4);
+  return { all: months, recent, history, loading };
+}
+
 export function useUserContributions(userId: string | undefined) {
   const [items, setItems] = useState<ContributionDoc[]>([]);
   const [loading, setLoading] = useState(true);
