@@ -24,6 +24,8 @@ const en = {
     gender: "Gender",
     male: "Male",
     female: "Female",
+    selectGender: "Select gender",
+    genderRequired: "Please select your gender",
     haveAccount: "Already have an account?",
     noAccount: "Don't have an account?",
     welcome: "Welcome back",
