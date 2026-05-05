@@ -117,6 +117,12 @@ const am: Translations = {
   superAdmin: {
     totalUsers: "ጠቅላላ ተጠቃሚዎች",
     totalContributions: "ጠቅላላ መዋጮ",
+    contributedThisMonth: "በዚህ ወር የተዋጣ",
+    totalContributedAllTime: "ጠቅላላ የተዋጣ (ሁልጊዜ)",
+    approvedThisMonth: "በዚህ ወር የጸደቁ",
+    rejectedThisMonth: "በዚህ ወር የተከለከሉ",
+    participationRate: "የተሳትፎ መጠን",
+    avgPerStudent: "በተማሪ አማካይ",
     systemHealth: "የስርዓት ጤና",
     roleBreakdown: "የሚና ስብጥር",
     adminManagement: "የአስተዳዳሪ አስተዳደር",
