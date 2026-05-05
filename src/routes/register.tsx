@@ -30,7 +30,7 @@ function RegisterPage() {
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
-  const [gender, setGender] = useState<Gender>("male");
+  const [gender, setGender] = useState<Gender | "">("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -43,11 +43,12 @@ function RegisterPage() {
     if (!fullName.trim()) return toast.error(t("auth.nameRequired"));
     if (!phone.trim()) return toast.error(t("auth.phoneRequired"));
     if (!ETHIOPIAN_PHONE.test(phone.trim())) return toast.error(t("auth.phoneFormat"));
+    if (!gender) return toast.error(t("auth.genderRequired"));
     if (password.length < 6) return toast.error(t("auth.passwordShort"));
     if (password !== confirmPassword) return toast.error(t("auth.passwordMismatch"));
     setBusy(true);
     try {
-      const result = await signUp({ fullName, phone: phone.trim(), gender, email, password });
+      const result = await signUp({ fullName, phone: phone.trim(), gender: gender as Gender, email, password });
       if (result.verificationSent) {
         toast.success(t("auth.accountCreated"));
       } else {
@@ -122,7 +123,7 @@ function RegisterPage() {
             <Label className="text-sm">{t("auth.gender")}</Label>
             <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
               <SelectTrigger className="h-11 rounded-lg bg-background/60">
-                <SelectValue />
+                <SelectValue placeholder={t("auth.selectGender")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">{t("auth.male")}</SelectItem>
