@@ -16,13 +16,36 @@ function SuperDashboard() {
   const { month } = useActiveMonth();
 
   const stats = useMemo(() => {
-    const totalThisMonth = items
-      .filter((c) => c.monthId === month?.id && c.status === "approved")
+    const approved = items.filter((c) => c.status === "approved");
+    const totalThisMonth = approved
+      .filter((c) => c.monthId === month?.id)
       .reduce((s, c) => s + (c.amount ?? 0), 0);
+    const totalAllTime = approved.reduce((s, c) => s + (c.amount ?? 0), 0);
+    const approvedThisMonthCount = approved.filter((c) => c.monthId === month?.id).length;
+    const rejectedThisMonth = items.filter(
+      (c) => c.monthId === month?.id && c.status === "rejected",
+    ).length;
     const admins = users.filter((u) => u.role === "admin").length;
     const students = users.filter((u) => u.role === "student").length;
     const pending = items.filter((c) => c.status === "pending").length;
-    return { totalThisMonth, admins, students, pending };
+    const activeStudents = users.filter((u) => u.role === "student" && u.isActive !== false).length;
+    const participationPct = activeStudents
+      ? Math.round((approvedThisMonthCount / activeStudents) * 100)
+      : 0;
+    const avgPerStudent = approvedThisMonthCount
+      ? Math.round(totalThisMonth / approvedThisMonthCount)
+      : 0;
+    return {
+      totalThisMonth,
+      totalAllTime,
+      approvedThisMonthCount,
+      rejectedThisMonth,
+      admins,
+      students,
+      pending,
+      participationPct,
+      avgPerStudent,
+    };
   }, [items, month?.id, users]);
 
   return (
@@ -30,10 +53,15 @@ function SuperDashboard() {
       <h1 className="text-2xl font-bold">{t("nav.dashboard")}</h1>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
         <Tile icon={<Users className="h-4 w-4" />} label={t("superAdmin.totalUsers")} value={String(users.length)} />
-        <Tile icon={<Wallet className="h-4 w-4" />} label={t("superAdmin.totalContributions")} value={`${stats.totalThisMonth} ETB`} accent="success" />
+        <Tile icon={<Wallet className="h-4 w-4" />} label={t("superAdmin.contributedThisMonth")} value={`${stats.totalThisMonth} ETB`} accent="success" />
+        <Tile icon={<TrendingUp className="h-4 w-4" />} label={t("superAdmin.totalContributedAllTime")} value={`${stats.totalAllTime} ETB`} accent="success" />
+        <Tile icon={<CheckCircle2 className="h-4 w-4" />} label={t("superAdmin.approvedThisMonth")} value={String(stats.approvedThisMonthCount)} accent="success" />
+        <Tile icon={<XCircle className="h-4 w-4" />} label={t("superAdmin.rejectedThisMonth")} value={String(stats.rejectedThisMonth)} />
         <Link to="/super/contributions" className="contents">
           <Tile icon={<Clock className="h-4 w-4" />} label={t("superAdmin.pendingAcrossAll")} value={String(stats.pending)} accent={stats.pending > 0 ? "warn" : undefined} />
         </Link>
+        <Tile icon={<CalendarDays className="h-4 w-4" />} label={t("superAdmin.participationRate")} value={`${stats.participationPct}%`} />
+        <Tile icon={<Wallet className="h-4 w-4" />} label={t("superAdmin.avgPerStudent")} value={`${stats.avgPerStudent} ETB`} />
         <Tile icon={<Shield className="h-4 w-4" />} label={t("nav.admins")} value={String(stats.admins)} />
         <Tile icon={<Activity className="h-4 w-4" />} label={t("common.student")} value={String(stats.students)} />
       </div>
