@@ -26,6 +26,8 @@ const am: Translations = {
     gender: "ጾታ",
     male: "ወንድ",
     female: "ሴት",
+    selectGender: "ጾታ ይምረጡ",
+    genderRequired: "እባክዎ ጾታዎን ይምረጡ",
     haveAccount: "ቀደም ሲል መለያ አለህ?",
     noAccount: "መለያ የለህም?",
     welcome: "እንኳን ደህና መጣህ",
