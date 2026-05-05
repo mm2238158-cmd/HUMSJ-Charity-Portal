@@ -123,7 +123,7 @@ function RegisterPage() {
             <Label className="text-sm">{t("auth.gender")}</Label>
             <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
               <SelectTrigger className="h-11 rounded-lg bg-background/60">
-                <SelectValue />
+                <SelectValue placeholder={t("auth.selectGender")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="male">{t("auth.male")}</SelectItem>
