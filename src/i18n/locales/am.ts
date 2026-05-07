@@ -14,6 +14,14 @@ const am: Translations = {
     approvals: "ፍቃዶች",
     admins: "አስተዳዳሪዎች",
     dashboard: "ዳሽቦርድ",
+    analytics: "ትንታኔ",
+  },
+  analytics: {
+    totalApproved: "ጠቅላላ የጸደቀ",
+    avgPerMonth: "በወር አማካይ",
+    recentContributions: "የቅርብ መዋጮዎች",
+    topContributors: "ምርጥ አዋጭዎች",
+    trend: "የመዋጮ አዝማሚያ",
   },
   auth: {
     signIn: "ግባ",
@@ -159,6 +167,8 @@ const am: Translations = {
     pendingAcrossAll: "በሁሉም አድሚኖች ላይ የሚጠብቁ",
     reassignAdmin: "አድሚን እንደገና መድብ",
     actionByYou: "በሱፐር-አድሚን የተደረገ እርምጃ",
+    viewStudent: "ይመልከቱ",
+    studentAnalytics: "የተማሪ ትንታኔ",
   },
   settings: {
     title: "ቅንብሮች",
