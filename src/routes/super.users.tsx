@@ -22,6 +22,7 @@ function SuperUsers() {
   const { t } = useTranslation();
   const { users, loading } = useAllUsers();
   const [q, setQ] = useState("");
+  const [viewing, setViewing] = useState<UserDoc | null>(null);
 
   const filtered = useMemo(
     () =>
