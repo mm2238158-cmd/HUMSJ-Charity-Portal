@@ -12,6 +12,14 @@ const en = {
     approvals: "Approvals",
     admins: "Admins",
     dashboard: "Dashboard",
+    analytics: "Analytics",
+  },
+  analytics: {
+    totalApproved: "Total approved",
+    avgPerMonth: "Average / month",
+    recentContributions: "Recent contributions",
+    topContributors: "Top contributors",
+    trend: "Contribution trend",
   },
   auth: {
     signIn: "Sign in",
@@ -157,6 +165,8 @@ const en = {
     pendingAcrossAll: "Pending across all admins",
     reassignAdmin: "Reassign admin",
     actionByYou: "Action by super-admin",
+    viewStudent: "View",
+    studentAnalytics: "Student analytics",
   },
   settings: {
     title: "Settings",

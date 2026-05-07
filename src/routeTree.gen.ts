@@ -22,6 +22,7 @@ import { Route as SuperUsersRouteImport } from './routes/super.users'
 import { Route as SuperSettingsRouteImport } from './routes/super.settings'
 import { Route as SuperNotificationsRouteImport } from './routes/super.notifications'
 import { Route as SuperContributionsRouteImport } from './routes/super.contributions'
+import { Route as SuperAnalyticsRouteImport } from './routes/super.analytics'
 import { Route as SuperAdminsRouteImport } from './routes/super.admins'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppPayRouteImport } from './routes/app.pay'
@@ -31,6 +32,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminNotificationsRouteImport } from './routes/admin.notifications'
 import { Route as AdminApprovalsRouteImport } from './routes/admin.approvals'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 
 const SuperRoute = SuperRouteImport.update({
   id: '/super',
@@ -97,6 +99,11 @@ const SuperContributionsRoute = SuperContributionsRouteImport.update({
   path: '/contributions',
   getParentRoute: () => SuperRoute,
 } as any)
+const SuperAnalyticsRoute = SuperAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => SuperRoute,
+} as any)
 const SuperAdminsRoute = SuperAdminsRouteImport.update({
   id: '/admins',
   path: '/admins',
@@ -142,6 +149,11 @@ const AdminApprovalsRoute = AdminApprovalsRouteImport.update({
   path: '/approvals',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -150,6 +162,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -159,6 +172,7 @@ export interface FileRoutesByFullPath {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/analytics': typeof SuperAnalyticsRoute
   '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -171,6 +185,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -180,6 +195,7 @@ export interface FileRoutesByTo {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/analytics': typeof SuperAnalyticsRoute
   '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -196,6 +212,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/super': typeof SuperRouteWithChildren
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/approvals': typeof AdminApprovalsRoute
   '/admin/notifications': typeof AdminNotificationsRoute
   '/admin/settings': typeof AdminSettingsRoute
@@ -205,6 +222,7 @@ export interface FileRoutesById {
   '/app/pay': typeof AppPayRoute
   '/app/settings': typeof AppSettingsRoute
   '/super/admins': typeof SuperAdminsRoute
+  '/super/analytics': typeof SuperAnalyticsRoute
   '/super/contributions': typeof SuperContributionsRoute
   '/super/notifications': typeof SuperNotificationsRoute
   '/super/settings': typeof SuperSettingsRoute
@@ -222,6 +240,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/super'
+    | '/admin/analytics'
     | '/admin/approvals'
     | '/admin/notifications'
     | '/admin/settings'
@@ -231,6 +250,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/analytics'
     | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
@@ -243,6 +263,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/register'
+    | '/admin/analytics'
     | '/admin/approvals'
     | '/admin/notifications'
     | '/admin/settings'
@@ -252,6 +273,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/analytics'
     | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
@@ -267,6 +289,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/super'
+    | '/admin/analytics'
     | '/admin/approvals'
     | '/admin/notifications'
     | '/admin/settings'
@@ -276,6 +299,7 @@ export interface FileRouteTypes {
     | '/app/pay'
     | '/app/settings'
     | '/super/admins'
+    | '/super/analytics'
     | '/super/contributions'
     | '/super/notifications'
     | '/super/settings'
@@ -387,6 +411,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SuperContributionsRouteImport
       parentRoute: typeof SuperRoute
     }
+    '/super/analytics': {
+      id: '/super/analytics'
+      path: '/analytics'
+      fullPath: '/super/analytics'
+      preLoaderRoute: typeof SuperAnalyticsRouteImport
+      parentRoute: typeof SuperRoute
+    }
     '/super/admins': {
       id: '/super/admins'
       path: '/admins'
@@ -450,10 +481,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApprovalsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminApprovalsRoute: typeof AdminApprovalsRoute
   AdminNotificationsRoute: typeof AdminNotificationsRoute
   AdminSettingsRoute: typeof AdminSettingsRoute
@@ -462,6 +501,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminApprovalsRoute: AdminApprovalsRoute,
   AdminNotificationsRoute: AdminNotificationsRoute,
   AdminSettingsRoute: AdminSettingsRoute,
@@ -491,6 +531,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 interface SuperRouteChildren {
   SuperAdminsRoute: typeof SuperAdminsRoute
+  SuperAnalyticsRoute: typeof SuperAnalyticsRoute
   SuperContributionsRoute: typeof SuperContributionsRoute
   SuperNotificationsRoute: typeof SuperNotificationsRoute
   SuperSettingsRoute: typeof SuperSettingsRoute
@@ -500,6 +541,7 @@ interface SuperRouteChildren {
 
 const SuperRouteChildren: SuperRouteChildren = {
   SuperAdminsRoute: SuperAdminsRoute,
+  SuperAnalyticsRoute: SuperAnalyticsRoute,
   SuperContributionsRoute: SuperContributionsRoute,
   SuperNotificationsRoute: SuperNotificationsRoute,
   SuperSettingsRoute: SuperSettingsRoute,

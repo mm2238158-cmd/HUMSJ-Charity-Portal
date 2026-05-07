@@ -14,6 +14,14 @@ const om: Translations = {
     approvals: "Mirkana",
     admins: "Bulchitoota",
     dashboard: "Daashboordii",
+    analytics: "Xiinxala",
+  },
+  analytics: {
+    totalApproved: "Walumaa mirkanaa'e",
+    avgPerMonth: "Giddugaleessa ji'aatti",
+    recentContributions: "Buusii dhiyoo",
+    topContributors: "Buustota olaanoo",
+    trend: "Adeemsa buusii",
   },
   auth: {
     signIn: "Seeni",
@@ -159,6 +167,8 @@ const om: Translations = {
     pendingAcrossAll: "Hunda biratti kan eegamu",
     reassignAdmin: "Admin irra deebii ramadi",
     actionByYou: "Tarkaanfii super-admin",
+    viewStudent: "Ilaali",
+    studentAnalytics: "Xiinxala barataa",
   },
   settings: {
     title: "Qindaa'ina",

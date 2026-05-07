@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
+import { StudentAnalyticsDialog } from "@/components/student-analytics-dialog";
 import { useTranslation } from "react-i18next";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Eye } from "lucide-react";
+import type { UserDoc } from "@/lib/types";
 
 export const Route = createFileRoute("/super/users")({
   component: SuperUsers,
@@ -20,6 +22,7 @@ function SuperUsers() {
   const { t } = useTranslation();
   const { users, loading } = useAllUsers();
   const [q, setQ] = useState("");
+  const [viewing, setViewing] = useState<UserDoc | null>(null);
 
   const filtered = useMemo(
     () =>
@@ -77,14 +80,18 @@ function SuperUsers() {
                         </span>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => toggleActive(u.id, u.isActive)}
-                    >
-                      {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setViewing(u)}>
+                        <Eye className="h-4 w-4 mr-1" /> {t("superAdmin.viewStudent")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleActive(u.id, u.isActive)}
+                      >
+                        {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -117,9 +124,14 @@ function SuperUsers() {
                         <td className="px-4 py-3 text-xs capitalize">{u.role}</td>
                         <td className="px-4 py-3"><StatusBadge status={u.isActive ? "active" : "inactive"} /></td>
                         <td className="px-4 py-3">
-                          <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
-                            {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setViewing(u)}>
+                              <Eye className="h-4 w-4 mr-1" /> {t("superAdmin.viewStudent")}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
+                              {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -130,6 +142,7 @@ function SuperUsers() {
           </Card>
         </>
       )}
+      <StudentAnalyticsDialog user={viewing} open={!!viewing} onOpenChange={(v) => !v && setViewing(null)} />
     </div>
   );
 }
