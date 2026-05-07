@@ -124,9 +124,14 @@ function SuperUsers() {
                         <td className="px-4 py-3 text-xs capitalize">{u.role}</td>
                         <td className="px-4 py-3"><StatusBadge status={u.isActive ? "active" : "inactive"} /></td>
                         <td className="px-4 py-3">
-                          <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
-                            {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
-                          </Button>
+                          <div className="flex items-center gap-1">
+                            <Button size="sm" variant="ghost" onClick={() => setViewing(u)}>
+                              <Eye className="h-4 w-4 mr-1" /> {t("superAdmin.viewStudent")}
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => toggleActive(u.id, u.isActive)}>
+                              {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -137,6 +142,7 @@ function SuperUsers() {
           </Card>
         </>
       )}
+      <StudentAnalyticsDialog user={viewing} open={!!viewing} onOpenChange={(v) => !v && setViewing(null)} />
     </div>
   );
 }
