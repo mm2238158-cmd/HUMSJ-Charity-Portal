@@ -9,6 +9,7 @@ import {
   CheckCircle2,
   Shield,
   LayoutDashboard,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ interface NavItem {
   to: string;
   icon: React.ComponentType<{ className?: string }>;
   label: string;
+  desktopOnly?: boolean;
 }
 
 export function useNavItems(): NavItem[] {
@@ -25,6 +27,7 @@ export function useNavItems(): NavItem[] {
   if (role === "super-admin") {
     return [
       { to: "/super", icon: LayoutDashboard, label: t("nav.dashboard") },
+      { to: "/super/analytics", icon: BarChart3, label: t("nav.analytics"), desktopOnly: true },
       { to: "/super/contributions", icon: CheckCircle2, label: t("nav.approvals") },
       { to: "/super/users", icon: Users, label: t("nav.users") },
       { to: "/super/admins", icon: Shield, label: t("nav.admins") },
@@ -34,6 +37,7 @@ export function useNavItems(): NavItem[] {
   if (role === "admin") {
     return [
       { to: "/admin", icon: LayoutDashboard, label: t("nav.dashboard") },
+      { to: "/admin/analytics", icon: BarChart3, label: t("nav.analytics"), desktopOnly: true },
       { to: "/admin/users", icon: Users, label: t("nav.users") },
       { to: "/admin/approvals", icon: CheckCircle2, label: t("nav.approvals") },
       { to: "/admin/settings", icon: SettingsIcon, label: t("nav.settings") },
@@ -48,7 +52,7 @@ export function useNavItems(): NavItem[] {
 }
 
 export function BottomNav() {
-  const items = useNavItems();
+  const items = useNavItems().filter((it) => !it.desktopOnly);
   const path = useRouterState({ select: (s) => s.location.pathname });
   const dense = items.length >= 5;
   return (
@@ -89,7 +93,7 @@ export function DesktopSidebar() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const { t } = useTranslation();
   return (
-    <aside className="hidden md:flex md:flex-col md:w-64 border-r border-border bg-sidebar text-sidebar-foreground">
+    <aside className="hidden md:flex md:flex-col md:w-64 border-r border-border bg-sidebar text-sidebar-foreground sticky top-0 h-screen overflow-y-auto shrink-0">
       <div className="flex items-center gap-2 px-5 py-5 border-b border-sidebar-border">
         <img src="/humsj-icon-192.png" alt="" className="h-9 w-9 rounded-xl" />
         <div>
