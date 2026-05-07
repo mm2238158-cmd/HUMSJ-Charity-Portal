@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/status-badge";
+import { StudentAnalyticsDialog } from "@/components/student-analytics-dialog";
 import { useTranslation } from "react-i18next";
 import { doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
-import { Search } from "lucide-react";
+import { Search, Eye } from "lucide-react";
+import type { UserDoc } from "@/lib/types";
 
 export const Route = createFileRoute("/super/users")({
   component: SuperUsers,
