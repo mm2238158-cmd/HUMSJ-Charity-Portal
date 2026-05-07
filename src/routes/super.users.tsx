@@ -80,14 +80,18 @@ function SuperUsers() {
                         </span>
                       )}
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => toggleActive(u.id, u.isActive)}
-                    >
-                      {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
-                    </Button>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button size="sm" variant="outline" onClick={() => setViewing(u)}>
+                        <Eye className="h-4 w-4 mr-1" /> {t("superAdmin.viewStudent")}
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => toggleActive(u.id, u.isActive)}
+                      >
+                        {u.isActive ? t("superAdmin.deactivate") : t("superAdmin.activate")}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               );
